@@ -1,37 +1,57 @@
-require('dotenv').config();
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import pg from 'pg';
 
-const schemaPath = path.join(__dirname, '..', 'src', 'server', 'db', 'schema.sql');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = resolve(__dirname, '..');
 
-async function migrate() {
-  const client = await pool.connect();
-  try {
-    const { rows } = await client.query("select to_regclass('public.customers') as applied");
-    if (rows[0].applied) {
-      console.log('Schema already applied, skipping.');
-      return;
+// Load .env
+const envPath = resolve(rootDir, '.env');
+if (existsSync(envPath)) {
+  const envContent = readFileSync(envPath, 'utf8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const [key, ...rest] = trimmed.split('=');
+      const val = rest.join('=').trim().replace(/^['"]|['"]$/g, '');
+      if (!process.env[key.trim()]) {
+        process.env[key.trim()] = val;
+      }
     }
-
-    const sql = fs.readFileSync(schemaPath, 'utf8');
-    await client.query('BEGIN');
-    try {
-      await client.query(sql);
-      await client.query('COMMIT');
-      console.log('Applied src/server/db/schema.sql');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    }
-  } finally {
-    client.release();
-    await pool.end();
   }
 }
 
-migrate().catch((err) => {
-  console.error('Migration failed:', err.message);
-  process.exit(1);
-});
+const connectionString = process.env.DATABASE_URL || 'postgres://kadai:kadai@localhost:5432/kadai';
+
+async function migrate() {
+  console.log(`🔌 Connecting to database: ${connectionString.replace(/:[^:@]+@/, ':***@')}`);
+  const client = new pg.Client({
+    connectionString,
+    ssl: connectionString.includes('supabase.co') ? { rejectUnauthorized: false } : false,
+  });
+
+  try {
+    await client.connect();
+    console.log('✅ Connected.');
+
+    const schemaSql = readFileSync(resolve(rootDir, 'src/server/db/schema.sql'), 'utf8');
+    console.log('📜 Executing src/server/db/schema.sql...');
+
+    // Execute schema in transaction
+    await client.query('BEGIN');
+    await client.query(schemaSql);
+    await client.query('COMMIT');
+
+    console.log('🎉 Migration successful! All tables, enums and constraints created.');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => { });
+    console.error('❌ Migration failed:', err.message);
+    process.exitCode = 1;
+  } finally {
+    await client.end();
+  }
+}
+
+migrate();
