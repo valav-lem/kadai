@@ -1,6 +1,6 @@
 # Kadai · கடை — Project Charter & Plan
 
-> v1.0 · 11 Aug 2026 · Annachi Kadai Co · Owner: Annachi Kadai Co
+> v1.0 · 11 Aug 2026 · Annachi Kadai Co, Virudhunagar · Owner: Annachi Kadai Co
 > Phase **Build · M1** · 16 weeks · Budget **₹18.4L** · Go-live **22 Dec 2026**
 
 Operational companion to the [PRD](prd.md). The PRD says *what* we are building and why;
