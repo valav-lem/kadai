@@ -1,0 +1,42 @@
+name: Bug
+description: Something behaves wrongly at the counter or in the back office
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocks the counter — cannot serve a customer
+        - Blocks a filing or a Tally push
+        - Wrong number shown, work continues
+        - Cosmetic
+    validations: { required: true }
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options: [W1 Counter, W2 Catalogue, W3 Billing, W4 Compliance, W5 Books, W6 Storefront, W7 Tamil, Unknown]
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the exact figures if a total or a tax amount is wrong.
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened
+    validations: { required: true }
+  - type: input
+    id: locale
+    attributes:
+      label: Locale in use
+      placeholder: ta or en
+  - type: checkboxes
+    id: statutory
+    attributes:
+      label: Statutory
+      options:
+        - label: This affects an invoice, a filed return or a pushed voucher

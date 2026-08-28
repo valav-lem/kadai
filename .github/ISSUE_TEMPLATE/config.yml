@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Statutory question for the CA
+    url: https://github.com/valav-lem/kadai/discussions
+    about: GST treatment, return contents or voucher mapping — ask before building.

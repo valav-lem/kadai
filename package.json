@@ -1,0 +1,22 @@
+{
+  "name": "kadai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bookings-first back office for the Indian retail-plus-service shop",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm run dev:api & npm run dev:web",
+    "dev:api": "node --watch src/server/index.js",
+    "dev:web": "vite src/web",
+    "build": "vite build src/web",
+    "start": "node src/server/index.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js",
+    "test": "node --test src/server/**/*.test.js",
+    "lint": "eslint .",
+    "i18n:check": "node scripts/i18n-check.js"
+  }
+}

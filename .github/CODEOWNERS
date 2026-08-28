@@ -1,0 +1,12 @@
+# Default
+*                           @valav-lem
+
+# Anything statutory needs the compliance reviewer
+/docs/gst-compliance.md     @valav-lem
+/docs/decisions/            @valav-lem
+/src/server/modules/gst/    @valav-lem
+/src/server/modules/tally/  @valav-lem
+
+# Locale changes need the glossary reviewer
+/locales/                   @valav-lem
+/docs/glossary-tamil.md     @valav-lem

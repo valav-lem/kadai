@@ -1,0 +1,32 @@
+name: Statutory change
+description: A change to GST treatment, return contents, voucher mapping or a rate
+labels: ["statutory", "needs-ca"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Statutory interpretation is decided by the retained chartered accountant, not the team.
+        This issue stays open until a written decision is attached.
+  - type: textarea
+    id: change
+    attributes:
+      label: What changes
+    validations: { required: true }
+  - type: input
+    id: authority
+    attributes:
+      label: Source / notification reference
+      placeholder: Notification no., circular, or the CA's note
+    validations: { required: true }
+  - type: input
+    id: effective
+    attributes:
+      label: Effective from
+      placeholder: YYYY-MM-DD
+    validations: { required: true }
+  - type: textarea
+    id: impact
+    attributes:
+      label: Effect on already-filed periods
+      description: Does anything filed need revision? Say so explicitly, even if the answer is no.
+    validations: { required: true }

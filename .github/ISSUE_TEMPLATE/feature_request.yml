@@ -1,0 +1,30 @@
+name: Change request
+description: Something the shop needs that Kadai does not do
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What the shop needs
+      description: Describe the situation at the counter, not the feature you imagine.
+    validations: { required: true }
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options: [W1 Counter, W2 Catalogue, W3 Billing, W4 Compliance, W5 Books, W6 Storefront, W7 Tamil]
+    validations: { required: true }
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Which milestone should carry it
+      options: [M1 Counter, M2 Compliance, M3 Books, M4 Storefront & Tamil, After go-live, Backlog]
+    validations: { required: true }
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What the shop does today instead
+  - type: markdown
+    attributes:
+      value: |
+        Scope creep is a named risk. Mid-milestone additions need sponsor sign-off in writing.
