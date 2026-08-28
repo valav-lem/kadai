@@ -92,7 +92,10 @@ upgrade the shop's version requires.
 | Composition scheme (CMP-08) in v1? | CA | W4 data model | 15 Sep |
 | GST treatment of advance receipts on bookings | CA | W3 invoicing | 1 Oct |
 | Tamil terminology for statutory concepts — one reviewer | Sponsor | W7 glossary | 1 Nov |
-| Payment collection: UPI intent link or gateway? | Sponsor | W3, W6 | 15 Oct |
+| Payment collection for booking deposits on `/book` (W6) | Sponsor | W6 | 15 Oct |
+
+Resolved: invoice payment collection for W3 (UPI, Razorpay, Cashfree against an issued
+invoice) — see [ADR-0007](decisions/0007-payment-collection-via-gateway.md).
 
 ## 8 · Risk register
 

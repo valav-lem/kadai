@@ -7,13 +7,17 @@ distribution buys nothing and costs a support burden.
 
 ```
 browser (counter UI)  ──┐
-browser (/book public) ─┼──▶  API (Node)  ──▶  Postgres
+browser (/book public) ─┼──▶  API (Node/Fastify)  ──▶  Postgres
                         │           │
                         │           ├──▶ Tally Prime (XML over HTTP, LAN)
                         │           ├──▶ GSTN offline utility (JSON file out)
+                        │           ├──▶ Payment gateway (Razorpay, Cashfree, UPI) — invoice collection
                         │           └──▶ SMS provider
                         └── local queue (IndexedDB) for offline bookings
 ```
+
+API framework: Fastify, chosen for schema-validated routes on payment gateway webhooks (see
+[ADR-0006](decisions/0006-fastify-over-express.md)).
 
 ## Domain modules
 
@@ -22,7 +26,7 @@ browser (/book public) ─┼──▶  API (Node)  ──▶  Postgres
 | `bookings` | Slots, statuses, double-booking guard, staff assignment | W1 |
 | `catalogue` | Products, services, HSN/SAC, GST slab, stock, reorder points | W2 |
 | `customers` | Contact, GSTIN, visits, lifetime value | W1 |
-| `billing` | Tax invoices, credit notes, payments | W3 |
+| `billing` | Tax invoices, credit notes, payment collection (UPI, Razorpay, Cashfree) | W3 |
 | `gst` | Period aggregation, validation, GSTR-1/3B state machine, JSON export | W4 |
 | `tally` | Voucher generation, ledger mapping, push, day-book import | W5 |
 | `storefront` | Public booking page, reminders | W6 |
