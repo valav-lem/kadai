@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-11
-- **Deciders:** Sunil Kadam (sponsor), lead engineer
+- **Deciders:** Annachi Kadai Co (sponsor), lead engineer
 
 ## Context
 

@@ -1,7 +1,7 @@
 # 0003 · GSP integration, or stop at JSON export?
 
 - **Status:** **Proposed** — decision needed by **15 Sep 2026**
-- **Deciders:** Sunil Kadam (sponsor) + retained CA
+- **Deciders:** Annachi Kadai Co (sponsor) + retained CA
 - **Blocks:** W4 scope
 
 ## Context

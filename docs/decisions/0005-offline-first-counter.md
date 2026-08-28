@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-11
-- **Deciders:** Sunil Kadam, lead engineer
+- **Deciders:** Annachi Kadai Co, lead engineer
 
 ## Context
 

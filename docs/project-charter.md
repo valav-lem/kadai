@@ -1,6 +1,6 @@
 # Kadai · கடை — Project Charter & Plan
 
-> v1.0 · 11 Aug 2026 · Kadam & Co., Pune · Owner: Sunil Kadam
+> v1.0 · 11 Aug 2026 · Annachi Kadai Co · Owner: Annachi Kadai Co
 > Phase **Build · M1** · 16 weeks · Budget **₹18.4L** · Go-live **22 Dec 2026**
 
 Operational companion to the [PRD](prd.md). The PRD says *what* we are building and why;
@@ -14,7 +14,7 @@ diary, billing app, accountant's shoebox — with one panel that runs the counte
 the month. Success is judged on the shop floor, not in the codebase: the owner files GSTR-1
 within four days of period close, without help, in Tamil if they prefer.
 
-**Sponsor & decision rights.** Sunil Kadam is sponsor and sole product decision-maker.
+**Sponsor & decision rights.** Annachi Kadai Co is sponsor and sole product decision-maker.
 Statutory interpretation is decided by the retained chartered accountant, not by the team.
 Anything affecting filed returns needs both signatures.
 
@@ -54,7 +54,7 @@ glossary review and bilingual print.
 
 | Role | Who | Commitment | Accountable for |
 | --- | --- | --- | --- |
-| Sponsor / PO | Sunil Kadam | 6 hr/week | Scope calls, priority, acceptance |
+| Sponsor / PO | Annachi Kadai Co | 6 hr/week | Scope calls, priority, acceptance |
 | Lead engineer | TBA | Full-time | Architecture, W3–W5, releases |
 | Engineer | TBA | Full-time | W1, W2, W6 |
 | Designer | TBA | Half-time | Counter ergonomics, elder-readable type, Tamil layout |
@@ -114,4 +114,4 @@ upgrade the shop's version requires.
 
 ---
 
-Sign-off: **Sunil Kadam · Sponsor** ______________ · **Chartered Accountant** ______________
+Sign-off: **Annachi Kadai Co · Sponsor** ______________ · **Chartered Accountant** ______________

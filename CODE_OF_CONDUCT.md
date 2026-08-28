@@ -10,5 +10,5 @@ No one is expected to be available outside their committed hours.
 the counter is revenue; keep sessions short, arrive prepared, and never leave the shop
 unable to serve a customer because of something we changed.
 
-Raise a concern with the sponsor, Sunil Kadam, directly. Anything raised is handled in
+Raise a concern with the sponsor, Annachi Kadai Co, directly. Anything raised is handled in
 confidence.

@@ -68,4 +68,4 @@ npm run dev            # counter UI at :5173, API at :3000
 
 ## Licence
 
-Proprietary — © Kadam & Co., Pune. See [LICENSE](LICENSE).
+Proprietary — © Annachi Kadai Co. See [LICENSE](LICENSE).

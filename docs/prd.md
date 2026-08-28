@@ -1,6 +1,6 @@
 # Kadai · கடை — Product Requirements
 
-> v1.0 · August 2026 · Confidential · Owner: Sunil Kadam · Target: Pilot, Q4 2026
+> v1.0 · August 2026 · Confidential · Owner: Annachi Kadai Co · Target: Pilot, Q4 2026
 
 Kadai is a bookings-first back office for the Indian neighbourhood business that sells goods
 *and* time. One panel holds the appointment book, the product and service catalogue, the
