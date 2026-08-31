@@ -199,3 +199,14 @@ export async function adjustStock(id, delta) {
   `, [id, delta]);
   return res.rows[0] || null;
 }
+
+export async function deleteCatalogueItem(id) {
+  const res = await query(`
+    UPDATE catalogue_items
+    SET active = false
+    WHERE id = $1
+    RETURNING id, kind, name, active;
+  `, [id]);
+  return res.rows[0] || null;
+}
+

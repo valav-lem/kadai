@@ -56,4 +56,16 @@ export default async function catalogueRoutes(fastify, _options) {
     }
     return { item };
   });
+
+  fastify.delete('/:id', async (request, reply) => {
+    try {
+      const item = await catalogueService.deleteCatalogueItem(request.params.id);
+      if (!item) {
+        return reply.status(404).send({ error: 'Catalogue item not found' });
+      }
+      return { success: true, item };
+    } catch (err) {
+      return reply.status(400).send({ error: err.message });
+    }
+  });
 }

@@ -176,6 +176,11 @@ function KadaiApp() {
     await loadData();
   };
 
+  const handleDeleteItem = async (itemId) => {
+    await api.deleteCatalogueItem(itemId);
+    await loadData();
+  };
+
   const handleProductSale = async ({ productId, qty }) => {
     await api.adjustProductStock(productId, -qty);
     await loadData();
@@ -312,6 +317,7 @@ function KadaiApp() {
               setItemToEdit(item);
               setIsItemModalOpen(true);
             }}
+            onDeleteItem={handleDeleteItem}
             onAdjustStock={handleAdjustStock}
             onOpenProductSale={(prod) => {
               setSelectedProductForSale(prod);

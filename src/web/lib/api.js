@@ -69,6 +69,15 @@ export async function adjustProductStock(id, delta) {
   return data.item;
 }
 
+export async function deleteCatalogueItem(id) {
+  const res = await fetch(`/api/catalogue/${id}`, {
+    method: 'DELETE',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to delete item');
+  return data.item;
+}
+
 export async function fetchCustomers({ search } = {}) {
   const params = new URLSearchParams();
   if (search) params.append('search', search);
