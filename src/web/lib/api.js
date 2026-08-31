@@ -47,6 +47,17 @@ export async function createCatalogueItem(item) {
   return data.item;
 }
 
+export async function updateCatalogueItem(id, item) {
+  const res = await fetch(`/api/catalogue/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(item),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update item');
+  return data.item;
+}
+
 export async function adjustProductStock(id, delta) {
   const res = await fetch(`/api/catalogue/${id}/stock`, {
     method: 'PATCH',
@@ -76,6 +87,17 @@ export async function createCustomer(customer) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to create customer');
+  return data.customer;
+}
+
+export async function updateCustomer(id, customer) {
+  const res = await fetch(`/api/customers/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(customer),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update customer');
   return data.customer;
 }
 

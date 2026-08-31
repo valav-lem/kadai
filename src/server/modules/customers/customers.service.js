@@ -124,3 +124,59 @@ export async function findOrCreateCustomerByMobile({ name, mobile, gstin = null 
   }
   return createCustomer({ name, mobile: cleanMobile, gstin });
 }
+
+export async function updateCustomer(id, data) {
+  const existing = await getCustomerById(id);
+  if (!existing) return null;
+
+  const updates = [];
+  const params = [id];
+  let paramIdx = 2;
+
+  if (data.name !== undefined) {
+    if (!data.name || !data.name.trim()) {
+      throw new Error('Customer name cannot be empty');
+    }
+    updates.push(`name = $${paramIdx++}`);
+    params.push(data.name.trim());
+  }
+
+  if (data.mobile !== undefined) {
+    const cleanMobile = data.mobile.trim().replace(/\D/g, '').slice(-10);
+    if (cleanMobile.length < 10) {
+      throw new Error('Mobile number must be at least 10 digits');
+    }
+    updates.push(`mobile = $${paramIdx++}`);
+    params.push(cleanMobile);
+  }
+
+  if (data.gstin !== undefined) {
+    let cleanGstin = data.gstin ? data.gstin.trim().toUpperCase() : null;
+    if (cleanGstin) {
+      if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(cleanGstin)) {
+        throw new Error('Invalid GSTIN format. Expected 15-character alphanumeric GSTIN');
+      }
+    }
+    updates.push(`gstin = $${paramIdx++}`);
+    params.push(cleanGstin);
+  }
+
+  if (updates.length === 0) return existing;
+
+  try {
+    const sql = `
+      UPDATE customers
+      SET ${updates.join(', ')}
+      WHERE id = $1
+      RETURNING id, name, mobile, gstin, created_at;
+    `;
+    const res = await query(sql, params);
+    return res.rows[0];
+  } catch (err) {
+    if (err.code === '23505') {
+      throw new Error('A customer with this mobile number already exists');
+    }
+    throw err;
+  }
+}
+

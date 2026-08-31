@@ -26,4 +26,16 @@ export default async function customersRoutes(fastify, _options) {
       return reply.status(400).send({ error: err.message });
     }
   });
+
+  fastify.put('/:id', async (request, reply) => {
+    try {
+      const customer = await customersService.updateCustomer(request.params.id, request.body || {});
+      if (!customer) {
+        return reply.status(404).send({ error: 'Customer not found' });
+      }
+      return { customer };
+    } catch (err) {
+      return reply.status(400).send({ error: err.message });
+    }
+  });
 }

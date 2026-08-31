@@ -1,64 +1,64 @@
 :root {
-  /* --- Organic Color Palette --- */
-  --color-canvas: #FAF6EF;
-  --color-surface: #F2EADB;
-  --color-surface-hover: #E7DCB9;
+  /* --- Modern SaaS Color Palette --- */
+  --color-canvas: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F1F5F9;
   --color-card: #FFFFFF;
   
-  --color-terracotta: #C85A32;
-  --color-terracotta-hover: #B34D27;
-  --color-terracotta-light: #FCEFE9;
+  --color-terracotta: #EA580C;
+  --color-terracotta-hover: #C2410C;
+  --color-terracotta-light: #FFF7ED;
   
-  --color-sage: #56796A;
-  --color-sage-hover: #456356;
-  --color-sage-light: #EBF3EF;
+  --color-sage: #0D9488;
+  --color-sage-hover: #0F766E;
+  --color-sage-light: #F0FDFA;
   
-  --color-slate: #386A87;
-  --color-slate-light: #E9F1F6;
+  --color-slate: #2563EB;
+  --color-slate-light: #EFF6FF;
   
-  --color-ochre: #A67C2E;
-  --color-ochre-light: #FBF4E7;
+  --color-ochre: #D97706;
+  --color-ochre-light: #FFFBEB;
 
-  --color-text-main: #27211C;
-  --color-text-muted: #6B6158;
-  --color-border: #DECFC0;
-  --color-border-dark: #BFAF9E;
+  --color-text-main: #0F172A;
+  --color-text-muted: #64748B;
+  --color-border: #E2E8F0;
+  --color-border-dark: #CBD5E1;
 
   /* --- Status Colors --- */
-  --status-pending: #C27622;
-  --status-pending-bg: #FDF3E7;
-  --status-confirmed: #386A87;
-  --status-confirmed-bg: #E9F1F6;
-  --status-arrived: #56796A;
-  --status-arrived-bg: #EBF3EF;
-  --status-completed: #2A834B;
-  --status-completed-bg: #EAF6EE;
-  --status-cancelled: #A43939;
-  --status-cancelled-bg: #FDEEEE;
+  --status-pending: #D97706;
+  --status-pending-bg: #FFFBEB;
+  --status-confirmed: #2563EB;
+  --status-confirmed-bg: #EFF6FF;
+  --status-arrived: #0D9488;
+  --status-arrived-bg: #F0FDFA;
+  --status-completed: #16A34A;
+  --status-completed-bg: #F0FDF4;
+  --status-cancelled: #DC2626;
+  --status-cancelled-bg: #FEF2F2;
 
   /* --- Typography --- */
-  --font-heading: 'Caprasimo', Georgia, serif;
-  --font-body: 'Figtree', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Inter', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, sans-serif;
   
-  --font-size-sm: 15px;
-  --font-size-base: 17px;        /* Counter ergonomics: never below 17px */
-  --font-size-md: 19px;
-  --font-size-lg: 22px;
-  --font-size-xl: 28px;
-  --font-size-metric: 46px;    /* Metric figures: 46px or larger */
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-md: 17px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-metric: 36px;
 
   --line-height-base: 1.5;
-  --line-height-tamil: 1.65;   /* Tamil set one step larger in line-height */
+  --line-height-tamil: 1.6;
 
-  /* --- Radii & Ergonomics --- */
-  --radius-sm: 10px;
-  --radius-md: 16px;           /* 16px radii growing into pills */
-  --radius-lg: 22px;
+  /* --- Radii --- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-pill: 9999px;
 
-  --min-hit-target: 44px;      /* Hit targets never below 44px */
-  --border-rule-thick: 3px;    /* Rules 3px, not hairlines */
+  --min-hit-target: 40px;
+  --border-rule-thick: 1px;
   
-  --shadow-subtle: 0 4px 14px rgba(39, 33, 28, 0.06);
-  --shadow-modal: 0 16px 36px rgba(39, 33, 28, 0.16);
+  --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }

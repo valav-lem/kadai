@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ThemeProvider, CssBaseline, Box, Container, Alert, Button } from '@mui/material';
+import { kadaiTheme } from './styles/theme.js';
 import { I18nProvider, useI18n } from './lib/i18n.jsx';
 import Header from './components/Header.jsx';
 import DashboardView from './views/DashboardView.jsx';
@@ -36,10 +38,18 @@ function KadaiApp() {
   const [isQuickBookOpen, setIsQuickBookOpen] = useState(false);
   const [quickBookSlot, setQuickBookSlot] = useState(null);
   const [quickBookStaffId, setQuickBookStaffId] = useState(null);
+  const [quickBookCustomer, setQuickBookCustomer] = useState(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [selectedBookingForPayment, setSelectedBookingForPayment] = useState(null);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  
+  // Item Modal (Add & Edit)
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState(null);
+
+  // Customer Modal (Add & Edit)
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [customerToEdit, setCustomerToEdit] = useState(null);
+
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState(null);
   const [isProductSaleOpen, setIsProductSaleOpen] = useState(false);
@@ -152,8 +162,12 @@ function KadaiApp() {
     await loadData();
   };
 
-  const handleAddItem = async (itemPayload) => {
-    await api.createCatalogueItem(itemPayload);
+  const handleSaveItem = async (itemPayload, itemId) => {
+    if (itemId) {
+      await api.updateCatalogueItem(itemId, itemPayload);
+    } else {
+      await api.createCatalogueItem(itemPayload);
+    }
     await loadData();
   };
 
@@ -167,8 +181,12 @@ function KadaiApp() {
     await loadData();
   };
 
-  const handleAddCustomer = async (custPayload) => {
-    await api.createCustomer(custPayload);
+  const handleSaveCustomer = async (custPayload, custId) => {
+    if (custId) {
+      await api.updateCustomer(custId, custPayload);
+    } else {
+      await api.createCustomer(custPayload);
+    }
     await loadData();
   };
 
@@ -201,7 +219,7 @@ function KadaiApp() {
   const servicesOnly = catalogueItems.filter((i) => i.kind === 'service');
 
   return (
-    <div className="app-container">
+    <Box sx={{ width: '100%', maxWidth: '100vw', minHeight: '100vh', backgroundColor: 'background.default', display: 'flex', flexDirection: 'column', overflowX: 'hidden', boxSizing: 'border-box' }}>
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -211,6 +229,7 @@ function KadaiApp() {
         isOnline={isOnline}
         offlineCount={offlineCount}
         onOpenQuickBook={() => {
+          setQuickBookCustomer(null);
           setQuickBookSlot(null);
           setQuickBookStaffId(null);
           setIsQuickBookOpen(true);
@@ -219,38 +238,33 @@ function KadaiApp() {
 
       {/* Offline Sync Conflict Alert Banner */}
       {offlineConflicts.length > 0 && (
-        <div
-          style={{
-            backgroundColor: 'var(--status-cancelled-bg)',
-            color: 'var(--status-cancelled)',
-            padding: '12px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '2px solid var(--status-cancelled)',
-            fontWeight: 600,
+        <Alert
+          severity="warning"
+          variant="filled"
+          action={
+            <Button color="inherit" size="small" onClick={() => setOfflineConflicts([])}>
+              Dismiss
+            </Button>
+          }
+          sx={{
+            borderRadius: 0,
+            py: 1,
+            px: 3,
+            fontWeight: 700,
           }}
         >
-          <div>
-            ⚠️ <strong>Offline Sync Conflict:</strong> {offlineConflicts.length} offline booking(s) could not be automatically synced due to duplicate time slots. Please review and re-assign.
-          </div>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => setOfflineConflicts([])}
-          >
-            Dismiss ✕
-          </button>
-        </div>
+          Offline Sync Conflict: {offlineConflicts.length} offline booking(s) could not be automatically synced due to duplicate time slots. Please review and re-assign.
+        </Alert>
       )}
 
-      <main className="main-surface">
+      <Container maxWidth="xl" sx={{ py: { xs: 2.5, md: 3.5 }, px: { xs: 2, sm: 3, md: 4 }, flex: 1, width: '100%', maxWidth: '1440px !important', boxSizing: 'border-box', minWidth: 0 }}>
         {activeTab === 'dashboard' && (
           <DashboardView
             stats={stats}
             todayBookings={todayBookings}
             lowStockItems={lowStockItems}
             onOpenQuickBook={(slot, staffId) => {
+              setQuickBookCustomer(null);
               setQuickBookSlot(slot || null);
               setQuickBookStaffId(staffId || null);
               setIsQuickBookOpen(true);
@@ -269,6 +283,7 @@ function KadaiApp() {
             bookings={bookings}
             staffList={staffList}
             onOpenQuickBook={(slot, staffId) => {
+              setQuickBookCustomer(null);
               setQuickBookSlot(slot || null);
               setQuickBookStaffId(staffId || null);
               setIsQuickBookOpen(true);
@@ -289,7 +304,14 @@ function KadaiApp() {
           <CatalogueView
             items={catalogueItems}
             currentStaff={currentStaff}
-            onOpenAddItem={() => setIsAddItemOpen(true)}
+            onOpenAddItem={() => {
+              setItemToEdit(null);
+              setIsItemModalOpen(true);
+            }}
+            onOpenEditItem={(item) => {
+              setItemToEdit(item);
+              setIsItemModalOpen(true);
+            }}
             onAdjustStock={handleAdjustStock}
             onOpenProductSale={(prod) => {
               setSelectedProductForSale(prod);
@@ -302,15 +324,25 @@ function KadaiApp() {
         {activeTab === 'customers' && (
           <CustomersView
             customers={customers}
-            onOpenAddCustomer={() => setIsAddCustomerOpen(true)}
-            onBookForCustomer={(_cust) => {
+            currentStaff={currentStaff}
+            onOpenAddCustomer={() => {
+              setCustomerToEdit(null);
+              setIsCustomerModalOpen(true);
+            }}
+            onOpenEditCustomer={(cust) => {
+              setCustomerToEdit(cust);
+              setIsCustomerModalOpen(true);
+            }}
+            onBookForCustomer={(cust) => {
+              setQuickBookCustomer(cust);
               setQuickBookSlot(null);
               setQuickBookStaffId(null);
               setIsQuickBookOpen(true);
             }}
+            onRequestOwnerAuth={handleRequestOwnerAuth}
           />
         )}
-      </main>
+      </Container>
 
       {/* 4-Tap Quick Booking Modal */}
       <QuickBookModal
@@ -319,6 +351,7 @@ function KadaiApp() {
           setIsQuickBookOpen(false);
           setQuickBookSlot(null);
           setQuickBookStaffId(null);
+          setQuickBookCustomer(null);
         }}
         customers={customers}
         services={servicesOnly}
@@ -326,6 +359,7 @@ function KadaiApp() {
         currentStaff={currentStaff}
         initialSlot={quickBookSlot}
         initialStaffId={quickBookStaffId}
+        initialCustomer={quickBookCustomer}
         onBookingCreated={handleBookingCreated}
       />
 
@@ -354,11 +388,15 @@ function KadaiApp() {
         onReschedule={handleReschedule}
       />
 
-      {/* Add Catalogue Item Modal */}
+      {/* Catalogue Item Modal (Add & Edit) */}
       <NewItemModal
-        isOpen={isAddItemOpen}
-        onClose={() => setIsAddItemOpen(false)}
-        onCreated={handleAddItem}
+        isOpen={isItemModalOpen}
+        onClose={() => {
+          setIsItemModalOpen(false);
+          setItemToEdit(null);
+        }}
+        itemToEdit={itemToEdit}
+        onSave={handleSaveItem}
       />
 
       {/* Quick Product Sale Modal */}
@@ -374,11 +412,15 @@ function KadaiApp() {
         onSaleComplete={handleProductSale}
       />
 
-      {/* Add Customer Modal */}
+      {/* Customer Modal (Add & Edit) */}
       <NewCustomerModal
-        isOpen={isAddCustomerOpen}
-        onClose={() => setIsAddCustomerOpen(false)}
-        onCreated={handleAddCustomer}
+        isOpen={isCustomerModalOpen}
+        onClose={() => {
+          setIsCustomerModalOpen(false);
+          setCustomerToEdit(null);
+        }}
+        customerToEdit={customerToEdit}
+        onSave={handleSaveCustomer}
       />
 
       {/* Owner PIN Authorization Modal */}
@@ -395,16 +437,18 @@ function KadaiApp() {
         }}
         actionTitle={pinActionTitle}
       />
-    </div>
+    </Box>
   );
 }
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
   createRoot(rootElement).render(
-    <I18nProvider>
-      <KadaiApp />
-    </I18nProvider>
+    <ThemeProvider theme={kadaiTheme}>
+      <CssBaseline />
+      <I18nProvider>
+        <KadaiApp />
+      </I18nProvider>
+    </ThemeProvider>
   );
 }
-
