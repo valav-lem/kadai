@@ -1,0 +1,64 @@
+:root {
+  /* --- Organic Color Palette --- */
+  --color-canvas: #FAF6EF;
+  --color-surface: #F2EADB;
+  --color-surface-hover: #E7DCB9;
+  --color-card: #FFFFFF;
+  
+  --color-terracotta: #C85A32;
+  --color-terracotta-hover: #B34D27;
+  --color-terracotta-light: #FCEFE9;
+  
+  --color-sage: #56796A;
+  --color-sage-hover: #456356;
+  --color-sage-light: #EBF3EF;
+  
+  --color-slate: #386A87;
+  --color-slate-light: #E9F1F6;
+  
+  --color-ochre: #A67C2E;
+  --color-ochre-light: #FBF4E7;
+
+  --color-text-main: #27211C;
+  --color-text-muted: #6B6158;
+  --color-border: #DECFC0;
+  --color-border-dark: #BFAF9E;
+
+  /* --- Status Colors --- */
+  --status-pending: #C27622;
+  --status-pending-bg: #FDF3E7;
+  --status-confirmed: #386A87;
+  --status-confirmed-bg: #E9F1F6;
+  --status-arrived: #56796A;
+  --status-arrived-bg: #EBF3EF;
+  --status-completed: #2A834B;
+  --status-completed-bg: #EAF6EE;
+  --status-cancelled: #A43939;
+  --status-cancelled-bg: #FDEEEE;
+
+  /* --- Typography --- */
+  --font-heading: 'Caprasimo', Georgia, serif;
+  --font-body: 'Figtree', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  --font-size-sm: 15px;
+  --font-size-base: 17px;        /* Counter ergonomics: never below 17px */
+  --font-size-md: 19px;
+  --font-size-lg: 22px;
+  --font-size-xl: 28px;
+  --font-size-metric: 46px;    /* Metric figures: 46px or larger */
+
+  --line-height-base: 1.5;
+  --line-height-tamil: 1.65;   /* Tamil set one step larger in line-height */
+
+  /* --- Radii & Ergonomics --- */
+  --radius-sm: 10px;
+  --radius-md: 16px;           /* 16px radii growing into pills */
+  --radius-lg: 22px;
+  --radius-pill: 9999px;
+
+  --min-hit-target: 44px;      /* Hit targets never below 44px */
+  --border-rule-thick: 3px;    /* Rules 3px, not hairlines */
+  
+  --shadow-subtle: 0 4px 14px rgba(39, 33, 28, 0.06);
+  --shadow-modal: 0 16px 36px rgba(39, 33, 28, 0.16);
+}
