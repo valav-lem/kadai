@@ -11,6 +11,8 @@ import PaymentModal from './components/PaymentModal.jsx';
 import NewItemModal from './components/NewItemModal.jsx';
 import NewCustomerModal from './components/NewCustomerModal.jsx';
 import OwnerPinModal from './components/OwnerPinModal.jsx';
+import RescheduleModal from './components/RescheduleModal.jsx';
+import ProductSaleModal from './components/ProductSaleModal.jsx';
 
 import * as api from './lib/api.js';
 import { syncOfflineQueue, getOfflineBookings } from './lib/offline.js';
@@ -28,17 +30,23 @@ function KadaiApp() {
   const [stats, setStats] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [offlineCount, setOfflineCount] = useState(0);
+  const [offlineConflicts, setOfflineConflicts] = useState([]);
 
   // Modals
   const [isQuickBookOpen, setIsQuickBookOpen] = useState(false);
+  const [quickBookSlot, setQuickBookSlot] = useState(null);
+  const [quickBookStaffId, setQuickBookStaffId] = useState(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState(null);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+  const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState(null);
+  const [isProductSaleOpen, setIsProductSaleOpen] = useState(false);
+  const [selectedProductForSale, setSelectedProductForSale] = useState(null);
   const [isOwnerPinOpen, setIsOwnerPinOpen] = useState(false);
   const [pinActionTitle, setPinActionTitle] = useState('');
   const [pinSuccessCallback, setPinSuccessCallback] = useState(null);
-  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState(null);
-  const [quickBookSlot, setQuickBookSlot] = useState(null);
 
   // Load initial shop & staff
   const loadShopAndStaff = async () => {
@@ -87,9 +95,12 @@ function KadaiApp() {
 
     const handleOnline = async () => {
       setIsOnline(true);
-      await syncOfflineQueue(() => {
+      const res = await syncOfflineQueue(() => {
         loadData();
       });
+      if (res?.conflicts?.length > 0) {
+        setOfflineConflicts(res.conflicts);
+      }
       const off = await getOfflineBookings();
       setOfflineCount(off.length);
     };
@@ -101,7 +112,10 @@ function KadaiApp() {
 
     const interval = setInterval(async () => {
       if (navigator.onLine) {
-        await syncOfflineQueue(() => loadData());
+        const res = await syncOfflineQueue(() => loadData());
+        if (res?.conflicts?.length > 0) {
+          setOfflineConflicts(res.conflicts);
+        }
         const off = await getOfflineBookings();
         setOfflineCount(off.length);
       }
@@ -125,8 +139,16 @@ function KadaiApp() {
     await loadData();
   };
 
-  const handlePaymentComplete = async (bookingId, mode) => {
-    await api.updateBookingStatus(bookingId, 'completed');
+  const handlePaymentComplete = async (bookingId, mode, amountPaise) => {
+    await api.updateBookingStatus(bookingId, 'completed', {
+      payment_mode: mode,
+      paid_amount_paise: amountPaise,
+    });
+    await loadData();
+  };
+
+  const handleReschedule = async (bookingId, payload) => {
+    await api.updateBooking(bookingId, payload);
     await loadData();
   };
 
@@ -137,6 +159,11 @@ function KadaiApp() {
 
   const handleAdjustStock = async (itemId, delta) => {
     await api.adjustProductStock(itemId, delta);
+    await loadData();
+  };
+
+  const handleProductSale = async ({ productId, qty }) => {
+    await api.adjustProductStock(productId, -qty);
     await loadData();
   };
 
@@ -155,8 +182,21 @@ function KadaiApp() {
     }
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayBookings = bookings.filter((b) => b.start_time?.startsWith(todayStr));
+  // Indian Standard Time local date evaluation for Today view
+  const istFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const todayIstStr = istFormatter.format(new Date());
+
+  const todayBookings = bookings.filter((b) => {
+    if (!b.start_time) return false;
+    const bDate = istFormatter.format(new Date(b.start_time));
+    return bDate === todayIstStr;
+  });
+
   const lowStockItems = catalogueItems.filter((i) => i.kind === 'product' && i.stock_qty <= i.reorder_point);
   const servicesOnly = catalogueItems.filter((i) => i.kind === 'service');
 
@@ -172,9 +212,37 @@ function KadaiApp() {
         offlineCount={offlineCount}
         onOpenQuickBook={() => {
           setQuickBookSlot(null);
+          setQuickBookStaffId(null);
           setIsQuickBookOpen(true);
         }}
       />
+
+      {/* Offline Sync Conflict Alert Banner */}
+      {offlineConflicts.length > 0 && (
+        <div
+          style={{
+            backgroundColor: 'var(--status-cancelled-bg)',
+            color: 'var(--status-cancelled)',
+            padding: '12px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '2px solid var(--status-cancelled)',
+            fontWeight: 600,
+          }}
+        >
+          <div>
+            ⚠️ <strong>Offline Sync Conflict:</strong> {offlineConflicts.length} offline booking(s) could not be automatically synced due to duplicate time slots. Please review and re-assign.
+          </div>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setOfflineConflicts([])}
+          >
+            Dismiss ✕
+          </button>
+        </div>
+      )}
 
       <main className="main-surface">
         {activeTab === 'dashboard' && (
@@ -182,8 +250,9 @@ function KadaiApp() {
             stats={stats}
             todayBookings={todayBookings}
             lowStockItems={lowStockItems}
-            onOpenQuickBook={() => {
-              setQuickBookSlot(null);
+            onOpenQuickBook={(slot, staffId) => {
+              setQuickBookSlot(slot || null);
+              setQuickBookStaffId(staffId || null);
               setIsQuickBookOpen(true);
             }}
             onStatusChange={handleStatusChange}
@@ -199,13 +268,18 @@ function KadaiApp() {
           <CalendarView
             bookings={bookings}
             staffList={staffList}
-            onOpenQuickBook={(slot) => {
+            onOpenQuickBook={(slot, staffId) => {
               setQuickBookSlot(slot || null);
+              setQuickBookStaffId(staffId || null);
               setIsQuickBookOpen(true);
             }}
             onOpenPayment={(b) => {
               setSelectedBookingForPayment(b);
               setIsPaymentOpen(true);
+            }}
+            onOpenReschedule={(b) => {
+              setSelectedBookingForReschedule(b);
+              setIsRescheduleOpen(true);
             }}
             onStatusChange={handleStatusChange}
           />
@@ -217,6 +291,10 @@ function KadaiApp() {
             currentStaff={currentStaff}
             onOpenAddItem={() => setIsAddItemOpen(true)}
             onAdjustStock={handleAdjustStock}
+            onOpenProductSale={(prod) => {
+              setSelectedProductForSale(prod);
+              setIsProductSaleOpen(true);
+            }}
             onRequestOwnerAuth={handleRequestOwnerAuth}
           />
         )}
@@ -225,7 +303,9 @@ function KadaiApp() {
           <CustomersView
             customers={customers}
             onOpenAddCustomer={() => setIsAddCustomerOpen(true)}
-            onBookForCustomer={(cust) => {
+            onBookForCustomer={(_cust) => {
+              setQuickBookSlot(null);
+              setQuickBookStaffId(null);
               setIsQuickBookOpen(true);
             }}
           />
@@ -235,12 +315,17 @@ function KadaiApp() {
       {/* 4-Tap Quick Booking Modal */}
       <QuickBookModal
         isOpen={isQuickBookOpen}
-        onClose={() => setIsQuickBookOpen(false)}
+        onClose={() => {
+          setIsQuickBookOpen(false);
+          setQuickBookSlot(null);
+          setQuickBookStaffId(null);
+        }}
         customers={customers}
         services={servicesOnly}
         staffList={staffList}
         currentStaff={currentStaff}
         initialSlot={quickBookSlot}
+        initialStaffId={quickBookStaffId}
         onBookingCreated={handleBookingCreated}
       />
 
@@ -256,11 +341,37 @@ function KadaiApp() {
         onComplete={handlePaymentComplete}
       />
 
+      {/* Booking Reschedule Modal */}
+      <RescheduleModal
+        isOpen={isRescheduleOpen}
+        onClose={() => {
+          setIsRescheduleOpen(false);
+          setSelectedBookingForReschedule(null);
+        }}
+        booking={selectedBookingForReschedule}
+        staffList={staffList}
+        services={servicesOnly}
+        onReschedule={handleReschedule}
+      />
+
       {/* Add Catalogue Item Modal */}
       <NewItemModal
         isOpen={isAddItemOpen}
         onClose={() => setIsAddItemOpen(false)}
         onCreated={handleAddItem}
+      />
+
+      {/* Quick Product Sale Modal */}
+      <ProductSaleModal
+        isOpen={isProductSaleOpen}
+        onClose={() => {
+          setIsProductSaleOpen(false);
+          setSelectedProductForSale(null);
+        }}
+        product={selectedProductForSale}
+        customers={customers}
+        shopConfig={shopConfig}
+        onSaleComplete={handleProductSale}
       />
 
       {/* Add Customer Modal */}
@@ -296,3 +407,4 @@ if (rootElement) {
     </I18nProvider>
   );
 }
+

@@ -36,6 +36,9 @@ export async function getBookings({ start, end, staffId, status } = {}) {
       upper(b.slot) AS end_time,
       b.status,
       b.source,
+      b.payment_mode,
+      b.paid_at,
+      b.paid_amount_paise,
       b.notes,
       b.created_at,
       c.name AS customer_name,
@@ -71,6 +74,9 @@ export async function getBookingById(id) {
       upper(b.slot) AS end_time,
       b.status,
       b.source,
+      b.payment_mode,
+      b.paid_at,
+      b.paid_amount_paise,
       b.notes,
       b.created_at,
       c.name AS customer_name,
@@ -174,19 +180,40 @@ export async function createBooking(data) {
   }
 }
 
-export async function updateBookingStatus(id, newStatus) {
+export async function updateBookingStatus(id, newStatus, paymentDetails = {}) {
   const validStatuses = ['pending', 'confirmed', 'arrived', 'completed', 'cancelled'];
   if (!validStatuses.includes(newStatus)) {
     throw new Error(`Invalid status: ${newStatus}. Must be one of ${validStatuses.join(', ')}`);
   }
 
+  const { payment_mode = null, paid_amount_paise = null } = paymentDetails;
+
   try {
-    const res = await query(`
-      UPDATE bookings
-      SET status = $2
-      WHERE id = $1
-      RETURNING id;
-    `, [id, newStatus]);
+    let sql;
+    let params;
+
+    if (newStatus === 'completed') {
+      sql = `
+        UPDATE bookings
+        SET status = $2,
+            payment_mode = COALESCE($3, payment_mode),
+            paid_at = COALESCE(paid_at, now()),
+            paid_amount_paise = COALESCE($4, paid_amount_paise, (SELECT price_paise FROM catalogue_items WHERE id = bookings.item_id))
+        WHERE id = $1
+        RETURNING id;
+      `;
+      params = [id, newStatus, payment_mode, paid_amount_paise];
+    } else {
+      sql = `
+        UPDATE bookings
+        SET status = $2
+        WHERE id = $1
+        RETURNING id;
+      `;
+      params = [id, newStatus];
+    }
+
+    const res = await query(sql, params);
 
     if (res.rows.length === 0) return null;
     return getBookingById(id);
@@ -201,10 +228,87 @@ export async function updateBookingStatus(id, newStatus) {
   }
 }
 
+export async function updateBooking(id, data) {
+  const existing = await getBookingById(id);
+  if (!existing) return null;
+
+  const updates = [];
+  const params = [id];
+  let paramIdx = 2;
+
+  const staffId = data.staff_id !== undefined ? data.staff_id : existing.staff_id;
+  const itemId = data.item_id !== undefined ? data.item_id : existing.item_id;
+
+  if (data.staff_id !== undefined) {
+    updates.push(`staff_id = $${paramIdx++}`);
+    params.push(data.staff_id);
+  }
+
+  if (data.item_id !== undefined) {
+    updates.push(`item_id = $${paramIdx++}`);
+    params.push(data.item_id);
+  }
+
+  if (data.start_time !== undefined) {
+    const startDate = new Date(data.start_time);
+    let endDate;
+    if (data.end_time) {
+      endDate = new Date(data.end_time);
+    } else {
+      const item = await getCatalogueItemById(itemId);
+      const durationMin = item?.duration_min || 30;
+      endDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
+    }
+    updates.push(`slot = tstzrange($${paramIdx++}, $${paramIdx++}, '[)')`);
+    params.push(startDate.toISOString(), endDate.toISOString());
+  }
+
+  if (data.notes !== undefined) {
+    updates.push(`notes = $${paramIdx++}`);
+    params.push(data.notes);
+  }
+
+  if (data.status !== undefined) {
+    updates.push(`status = $${paramIdx++}`);
+    params.push(data.status);
+  }
+
+  if (updates.length === 0) {
+    return existing;
+  }
+
+  try {
+    const sql = `
+      UPDATE bookings
+      SET ${updates.join(', ')}
+      WHERE id = $1
+      RETURNING id;
+    `;
+    const res = await query(sql, params);
+    if (res.rows.length === 0) return null;
+    return getBookingById(id);
+  } catch (err) {
+    if (err.code === '23P01') {
+      const error = new Error('That slot is already taken for this staff member.');
+      error.code = 'DOUBLE_BOOKED';
+      error.statusCode = 409;
+      throw error;
+    }
+    throw err;
+  }
+}
+
 export async function getDashboardStats() {
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+  const istFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const todayDateStr = istFormatter.format(now);
+  const todayStart = new Date(`${todayDateStr}T00:00:00+05:30`).toISOString();
+  const todayEnd = new Date(`${todayDateStr}T23:59:59.999+05:30`).toISOString();
 
   const [todayBookingsRes, lowStockRes, activeStaffRes] = await Promise.all([
     query(`

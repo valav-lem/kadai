@@ -6,6 +6,7 @@ export default function CalendarView({
   staffList,
   onOpenQuickBook,
   onOpenPayment,
+  onOpenReschedule,
   onStatusChange,
 }) {
   const { t, formatMoney, formatTime } = useI18n();
@@ -13,10 +14,11 @@ export default function CalendarView({
   const [selectedStaffId, setSelectedStaffId] = useState('all');
   const [weekOffset, setWeekOffset] = useState(0);
 
-  // Generate 7 days for current week offset
+  // Generate 7 days for current week offset (Monday = 0, Sunday = 6)
   const today = new Date();
+  const dayOfWeek = (today.getDay() + 6) % 7;
   const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay() + 1 + weekOffset * 7); // Monday start
+  startOfWeek.setDate(today.getDate() - dayOfWeek + weekOffset * 7);
   startOfWeek.setHours(0, 0, 0, 0);
 
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -52,6 +54,11 @@ export default function CalendarView({
       d1.getMonth() === d2.getMonth() &&
       d1.getDate() === d2.getDate()
     );
+  };
+
+  const formatSlotIso = (d, hour) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour)}:00`;
   };
 
   return (
@@ -94,7 +101,10 @@ export default function CalendarView({
           ))}
         </div>
 
-        <button className="btn btn-primary" onClick={() => onOpenQuickBook()}>
+        <button
+          className="btn btn-primary"
+          onClick={() => onOpenQuickBook(null, selectedStaffId !== 'all' ? selectedStaffId : null)}
+        >
           + {t('booking.new')}
         </button>
       </div>
@@ -125,14 +135,7 @@ export default function CalendarView({
 
               {days.map((d, dayIdx) => {
                 const slotBookings = getBookingsForSlot(d, hour);
-                const slotIso = new Date(
-                  d.getFullYear(),
-                  d.getMonth(),
-                  d.getDate(),
-                  hour,
-                  0,
-                  0
-                ).toISOString().slice(0, 16);
+                const slotIso = formatSlotIso(d, hour);
 
                 return (
                   <div
@@ -140,7 +143,7 @@ export default function CalendarView({
                     className="grid-cell"
                     onClick={(e) => {
                       if (e.target === e.currentTarget) {
-                        onOpenQuickBook(slotIso);
+                        onOpenQuickBook(slotIso, selectedStaffId !== 'all' ? selectedStaffId : null);
                       }
                     }}
                   >
@@ -149,26 +152,75 @@ export default function CalendarView({
                         key={b.id}
                         className="booking-card-item"
                         style={{ borderLeftColor: b.staff_colour || 'var(--color-terracotta)' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (b.status === 'arrived') {
-                            onOpenPayment(b);
-                          } else if (b.status === 'confirmed') {
-                            onStatusChange(b.id, 'arrived');
-                          }
-                        }}
                       >
                         <div className="booking-card-header">
-                          <span>{b.customer_name}</span>
-                          <span className={`status-badge ${b.status}`} style={{ fontSize: '10px' }}>
-                            {t(`booking.status.${b.status}`)}
-                          </span>
+                          <span style={{ fontWeight: 700 }}>{b.customer_name}</span>
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <span className={`status-badge ${b.status}`} style={{ fontSize: '10px' }}>
+                              {t(`booking.status.${b.status}`)}
+                            </span>
+                            {b.status !== 'completed' && b.status !== 'cancelled' && onOpenReschedule && (
+                              <button
+                                type="button"
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: '0 2px',
+                                  fontSize: '12px',
+                                }}
+                                title="Reschedule / Edit"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenReschedule(b);
+                                }}
+                              >
+                                ✏️
+                              </button>
+                            )}
+                          </div>
                         </div>
+
                         <div className="booking-card-body">
                           <div>{b.item_name}</div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                             <span>{formatTime(b.start_time)}</span>
                             <span style={{ fontWeight: 600 }}>{formatMoney(b.price_paise)}</span>
+                          </div>
+
+                          {/* Quick Action Button */}
+                          <div style={{ marginTop: '6px', display: 'flex', gap: '4px' }}>
+                            {b.status === 'confirmed' && (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                style={{ fontSize: '11px', padding: '2px 8px', width: '100%' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onStatusChange(b.id, 'arrived');
+                                }}
+                              >
+                                🔔 {t('booking.action.markArrived')}
+                              </button>
+                            )}
+                            {b.status === 'arrived' && (
+                              <button
+                                type="button"
+                                className="btn btn-sage btn-sm"
+                                style={{ fontSize: '11px', padding: '2px 8px', width: '100%' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenPayment(b);
+                                }}
+                              >
+                                💳 {t('booking.action.collectPayment')}
+                              </button>
+                            )}
+                            {b.status === 'completed' && b.payment_mode && (
+                              <span style={{ fontSize: '11px', color: 'var(--status-completed)', fontWeight: 600 }}>
+                                ✅ Paid ({b.payment_mode.toUpperCase()})
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

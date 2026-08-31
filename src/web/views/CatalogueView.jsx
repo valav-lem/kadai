@@ -6,6 +6,7 @@ export default function CatalogueView({
   currentStaff,
   onOpenAddItem,
   onAdjustStock,
+  onOpenProductSale,
   onRequestOwnerAuth,
 }) {
   const { t, formatMoney } = useI18n();
@@ -115,13 +116,14 @@ export default function CatalogueView({
               <th>{t('catalogue.price')}</th>
               <th>{activeTab === 'product' ? t('catalogue.stock') : t('catalogue.duration')}</th>
               <th>Online</th>
+              {activeTab === 'product' && <th>Quick Sale</th>}
               {activeTab === 'product' && <th>Adjust Stock</th>}
             </tr>
           </thead>
           <tbody>
             {filteredItems.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: 'var(--color-text-muted)' }}>
+                <td colSpan={activeTab === 'product' ? '8' : '6'} style={{ textAlign: 'center', padding: '32px', color: 'var(--color-text-muted)' }}>
                   No items found.
                 </td>
               </tr>
@@ -166,6 +168,19 @@ export default function CatalogueView({
                     <td>
                       {item.bookable_online ? '🌐 Yes' : '—'}
                     </td>
+                    {activeTab === 'product' && (
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-sage btn-sm"
+                          disabled={item.stock_qty <= 0}
+                          onClick={() => onOpenProductSale && onOpenProductSale(item)}
+                          title="Sell product at counter"
+                        >
+                          ⚡ {t('catalogue.sellProduct')}
+                        </button>
+                      </td>
+                    )}
                     {activeTab === 'product' && (
                       <td>
                         <div style={{ display: 'flex', gap: '6px' }}>

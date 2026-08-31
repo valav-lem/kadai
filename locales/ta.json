@@ -107,5 +107,10 @@
   "auth.roleStaff": "பணியாளர்",
   "auth.roleAccountant": "கணக்காளர்",
   "auth.pinPlaceholder": "••••",
-  "auth.verify": "சரிபார்"
+  "auth.verify": "சரிபார்",
+
+  "booking.rescheduleTitle": "முன்பதிவை மாற்றி அமை",
+  "catalogue.productSaleTitle": "பொருள் நேரடி விற்பனை",
+  "catalogue.saleQuantity": "விற்பனை அளவு",
+  "catalogue.sellProduct": "விற்க"
 }
