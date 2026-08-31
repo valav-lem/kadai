@@ -1,4 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  Box,
+  Button,
+  Typography,
+  Alert,
+  IconButton,
+  Grid,
+  Avatar,
+} from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import BackspaceRoundedIcon from '@mui/icons-material/BackspaceRounded';
+import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
 import { useI18n } from '../lib/i18n.jsx';
 
 export default function OwnerPinModal({
@@ -58,7 +73,7 @@ export default function OwnerPinModal({
       setTimeout(() => {
         setPin('');
         setIsShaking(false);
-      }, 600);
+      }, 500);
     }
   };
 
@@ -73,134 +88,253 @@ export default function OwnerPinModal({
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div
-        className={`modal-content ${isShaking ? 'shake-animation' : ''}`}
-        style={{ maxWidth: '420px', textAlign: 'center' }}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          p: { xs: 2, sm: 2.5 },
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          position: 'relative',
+        },
+      }}
+    >
+      {/* Top Close Button */}
+      <IconButton
+        onClick={onClose}
+        size="small"
+        sx={{
+          position: 'absolute',
+          top: 14,
+          right: 14,
+          color: '#94A3B8',
+          '&:hover': { color: '#0F172A', backgroundColor: '#F1F5F9' },
+        }}
+      >
+        <CloseRoundedIcon sx={{ fontSize: 20 }} />
+      </IconButton>
+
+      <DialogContent
+        sx={{
+          p: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          outline: 'none',
+        }}
         tabIndex={0}
         ref={containerRef}
+        onKeyDown={handleKeyDown}
       >
-        <div className="modal-header" style={{ justifyContent: 'center', position: 'relative' }}>
-          <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🔒 {t('auth.ownerPinTitle')}
-          </h2>
-          <button
-            className="btn btn-secondary btn-sm"
-            style={{ position: 'absolute', right: 0 }}
-            onClick={onClose}
-          >
-            ✕
-          </button>
-        </div>
+        {/* Centered Lock Avatar Icon */}
+        <Avatar
+          sx={{
+            width: 56,
+            height: 56,
+            mb: 2,
+            backgroundColor: '#FFF7ED',
+            color: '#EA580C',
+            border: '1px solid #FFEDD5',
+            boxShadow: '0 4px 12px rgba(234, 88, 12, 0.15)',
+          }}
+        >
+          <LockRoundedIcon sx={{ fontSize: 28 }} />
+        </Avatar>
 
-        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)', marginBottom: '16px' }}>
+        {/* Centered Title & Subtitle */}
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: '1.35rem',
+            color: '#0F172A',
+            letterSpacing: '-0.025em',
+            textAlign: 'center',
+            width: '100%',
+            mb: 0.5,
+          }}
+        >
+          {t('auth.ownerPinTitle')}
+        </Typography>
+
+        <Typography
+          variant="body2"
+          sx={{
+            color: '#64748B',
+            fontWeight: 500,
+            textAlign: 'center',
+            width: '100%',
+            mb: 2,
+            px: 2,
+          }}
+        >
           {actionTitle ? `${actionTitle} — ` : ''}{t('auth.enterPin')}
-        </p>
+        </Typography>
 
         {error && (
-          <div
-            style={{
-              backgroundColor: 'var(--status-cancelled-bg)',
-              color: 'var(--status-cancelled)',
-              padding: '10px 14px',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '16px',
-              fontWeight: 600,
-              fontSize: 'var(--font-size-sm)',
-            }}
-          >
-            ⚠️ {error}
-          </div>
+          <Alert severity="error" sx={{ mb: 2, fontWeight: 700, borderRadius: 2, py: 0.5, width: '100%' }}>
+            {error}
+          </Alert>
         )}
 
-        {/* PIN Dot Indicators */}
-        <div
-          style={{
+        {/* Centered 4-Dot Passcode Indicators */}
+        <Box
+          className={isShaking ? 'shake-animation' : ''}
+          sx={{
             display: 'flex',
             justifyContent: 'center',
-            gap: '16px',
-            margin: '20px 0 28px',
+            alignItems: 'center',
+            gap: 2,
+            my: 2,
           }}
         >
           {[0, 1, 2, 3].map((idx) => (
-            <div
+            <Box
               key={idx}
-              style={{
-                width: '20px',
-                height: '20px',
+              sx={{
+                width: 16,
+                height: 16,
                 borderRadius: '50%',
-                border: '3px solid var(--color-terracotta)',
-                backgroundColor: pin.length > idx ? 'var(--color-terracotta)' : 'transparent',
-                transition: 'all 0.15s ease',
+                border: '2px solid #CBD5E1',
+                backgroundColor: pin.length > idx ? '#EA580C' : 'transparent',
+                borderColor: pin.length > idx ? '#EA580C' : '#CBD5E1',
+                transform: pin.length > idx ? 'scale(1.2)' : 'scale(1)',
+                transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: pin.length > idx ? '0 0 8px rgba(234, 88, 12, 0.4)' : 'none',
               }}
             />
           ))}
-        </div>
+        </Box>
 
-        {/* Numeric Keypad for Counter Ergonomics */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '12px',
-            maxWidth: '300px',
-            margin: '0 auto 16px',
+        {/* Centered Tactile Keypad */}
+        <Grid container spacing={1.5} sx={{ maxWidth: 280, mx: 'auto', mb: 2.5 }}>
+          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+            <Grid item xs={4} key={digit}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => handleDigit(digit)}
+                sx={{
+                  height: 58,
+                  fontSize: '1.4rem',
+                  fontWeight: 700,
+                  borderRadius: 3,
+                  borderColor: '#E2E8F0',
+                  color: '#0F172A',
+                  backgroundColor: '#F8FAFC',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+                  '&:hover': {
+                    backgroundColor: '#FFF7ED',
+                    borderColor: '#EA580C',
+                    color: '#EA580C',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.08)',
+                  },
+                  '&:active': {
+                    transform: 'scale(0.96)',
+                  },
+                }}
+              >
+                {digit}
+              </Button>
+            </Grid>
+          ))}
+
+          <Grid item xs={4}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={handleClear}
+              sx={{
+                height: 58,
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                borderRadius: 3,
+                borderColor: '#E2E8F0',
+                color: '#64748B',
+                backgroundColor: '#F8FAFC',
+                '&:hover': {
+                  backgroundColor: '#F1F5F9',
+                  borderColor: '#CBD5E1',
+                },
+              }}
+            >
+              Clear
+            </Button>
+          </Grid>
+
+          <Grid item xs={4}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => handleDigit('0')}
+              sx={{
+                height: 58,
+                fontSize: '1.4rem',
+                fontWeight: 700,
+                borderRadius: 3,
+                borderColor: '#E2E8F0',
+                color: '#0F172A',
+                backgroundColor: '#F8FAFC',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+                '&:hover': {
+                  backgroundColor: '#FFF7ED',
+                  borderColor: '#EA580C',
+                  color: '#EA580C',
+                  transform: 'translateY(-1px)',
+                },
+                '&:active': {
+                  transform: 'scale(0.96)',
+                },
+              }}
+            >
+              0
+            </Button>
+          </Grid>
+
+          <Grid item xs={4}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={handleBackspace}
+              sx={{
+                height: 58,
+                borderRadius: 3,
+                borderColor: '#E2E8F0',
+                color: '#64748B',
+                backgroundColor: '#F8FAFC',
+                '&:hover': {
+                  backgroundColor: '#F1F5F9',
+                  borderColor: '#CBD5E1',
+                  color: '#0F172A',
+                },
+              }}
+            >
+              <BackspaceRoundedIcon sx={{ fontSize: 22 }} />
+            </Button>
+          </Grid>
+        </Grid>
+
+        {/* Centered Footer Badge */}
+        <Typography
+          variant="caption"
+          sx={{
+            color: '#64748B',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.6,
+            fontWeight: 600,
+            fontSize: '0.78rem',
           }}
         >
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-            <button
-              key={digit}
-              type="button"
-              className="btn btn-secondary"
-              style={{
-                fontSize: '22px',
-                fontWeight: 700,
-                minHeight: '56px',
-                borderRadius: 'var(--radius-md)',
-              }}
-              onClick={() => handleDigit(digit)}
-            >
-              {digit}
-            </button>
-          ))}
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ fontSize: '15px', fontWeight: 600, minHeight: '56px' }}
-            onClick={handleClear}
-          >
-            Clear
-          </button>
-          <button
-            key="0"
-            type="button"
-            className="btn btn-secondary"
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              minHeight: '56px',
-              borderRadius: 'var(--radius-md)',
-            }}
-            onClick={() => handleDigit('0')}
-          >
-            0
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ fontSize: '20px', fontWeight: 700, minHeight: '56px' }}
-            onClick={handleBackspace}
-          >
-            ⌫
-          </button>
-        </div>
-
-        <div style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
-          {t('auth.ownerOnly')} (Default PIN: 1234)
-        </div>
-      </div>
-    </div>
+          <ShieldRoundedIcon sx={{ fontSize: 15, color: '#EA580C' }} />
+          <span>{t('auth.ownerOnly')} (Default PIN: 1234)</span>
+        </Typography>
+      </DialogContent>
+    </Dialog>
   );
 }

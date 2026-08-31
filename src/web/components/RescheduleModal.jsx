@@ -1,4 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  Typography,
+  Alert,
+  IconButton,
+  Paper,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import EditCalendarRoundedIcon from '@mui/icons-material/EditCalendarRounded';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
+import SlotPicker from './SlotPicker.jsx';
 import { useI18n } from '../lib/i18n.jsx';
 
 export default function RescheduleModal({
@@ -36,6 +57,8 @@ export default function RescheduleModal({
 
   if (!isOpen || !booking) return null;
 
+  const selectedService = services.find((s) => String(s.id) === String(selectedItemId));
+
   const handleSave = async () => {
     setError(null);
     setLoading(true);
@@ -62,102 +85,127 @@ export default function RescheduleModal({
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">📅 {t('booking.rescheduleTitle')}</h2>
-          <button className="btn btn-secondary btn-sm" onClick={onClose}>
-            ✕
-          </button>
-        </div>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 4, p: 1 },
+      }}
+    >
+      <DialogTitle sx={{ pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <EditCalendarRoundedIcon sx={{ color: '#EA580C', fontSize: 24 }} />
+          <Typography sx={{ fontWeight: 800, fontSize: '1.25rem', color: '#0F172A', letterSpacing: '-0.025em' }}>
+            {t('booking.rescheduleTitle')}
+          </Typography>
+        </Box>
+        <IconButton onClick={onClose} size="small" sx={{ color: '#64748B' }}>
+          <CloseRoundedIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+      </DialogTitle>
 
+      <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, py: 2.5 }}>
         {error && (
-          <div
-            style={{
-              backgroundColor: 'var(--status-cancelled-bg)',
-              color: 'var(--status-cancelled)',
-              padding: '12px 16px',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '16px',
-              fontWeight: 600,
-            }}
-          >
-            ⚠️ {error}
-          </div>
+          <Alert severity="error" sx={{ fontWeight: 700, borderRadius: 2 }}>
+            {error}
+          </Alert>
         )}
 
-        <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-          <div style={{ fontWeight: 700, fontSize: '16px' }}>{booking.customer_name}</div>
-          <div style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '2px' }}>
-            📞 {booking.customer_mobile} • Current: {booking.item_name} ({formatMoney(booking.price_paise)})
-          </div>
-        </div>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: 2.5,
+          }}
+        >
+          <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: '#0F172A' }}>
+            {booking.customer_name}
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#64748B', mt: 0.3, fontSize: '0.84rem' }}>
+            📞 +91 {booking.customer_mobile} • Current: <strong style={{ color: '#0F172A' }}>{booking.item_name}</strong> ({formatMoney(booking.price_paise)})
+          </Typography>
+        </Paper>
 
-        <div className="form-group">
-          <label className="form-label">{t('booking.selectService')}</label>
-          <select
-            className="form-select"
+        <FormControl fullWidth size="small">
+          <InputLabel>{t('booking.selectService')}</InputLabel>
+          <Select
             value={selectedItemId}
+            label={t('booking.selectService')}
             onChange={(e) => setSelectedItemId(e.target.value)}
           >
             {services.map((s) => (
-              <option key={s.id} value={s.id}>
+              <MenuItem key={s.id} value={s.id}>
                 {s.name} ({s.duration_min} {t('common.mins')} • {formatMoney(s.price_paise)})
-              </option>
+              </MenuItem>
             ))}
-          </select>
-        </div>
+          </Select>
+        </FormControl>
 
-        <div className="form-group">
-          <label className="form-label">{t('booking.selectStaff')}</label>
-          <select
-            className="form-select"
+        <FormControl fullWidth size="small">
+          <InputLabel>{t('booking.selectStaff')}</InputLabel>
+          <Select
             value={selectedStaffId}
+            label={t('booking.selectStaff')}
             onChange={(e) => setSelectedStaffId(e.target.value)}
           >
             {staffList.map((st) => (
-              <option key={st.id} value={st.id}>
-                {st.name} ({st.role})
-              </option>
+              <MenuItem key={st.id} value={st.id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: st.colour }} />
+                  <span>{st.name} ({st.role})</span>
+                </Box>
+              </MenuItem>
             ))}
-          </select>
-        </div>
+          </Select>
+        </FormControl>
 
-        <div className="form-group">
-          <label className="form-label">{t('booking.selectSlot')}</label>
-          <input
-            type="datetime-local"
-            className="form-input"
+        {/* Stylish Modern SlotPicker */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: 2.5,
+          }}
+        >
+          <SlotPicker
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
+            onChange={setStartTime}
+            durationMin={selectedService?.duration_min || booking.duration_min || 30}
           />
-        </div>
+        </Paper>
 
-        <div className="form-group">
-          <label className="form-label">{t('customers.notes')}</label>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Special requests or instructions..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-        </div>
+        <TextField
+          fullWidth
+          size="small"
+          label={t('customers.notes')}
+          placeholder="Special requests or instructions..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+      </DialogContent>
 
-        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
-            {t('common.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={loading}
-            onClick={handleSave}
-          >
-            {loading ? t('common.loading') : `💾 ${t('common.save')}`}
-          </button>
-        </div>
-      </div>
-    </div>
+      <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+        <Button variant="outlined" onClick={onClose} sx={{ borderRadius: 2, height: 38, px: 2 }}>
+          {t('common.cancel')}
+        </Button>
+
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          onClick={handleSave}
+          startIcon={<SaveRoundedIcon sx={{ fontSize: 18 }} />}
+          sx={{ borderRadius: 2, px: 2.8, height: 38, fontWeight: 800 }}
+        >
+          {loading ? t('common.loading') : t('common.save')}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

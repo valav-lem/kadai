@@ -1,5 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+  Button,
+  Typography,
+  Chip,
+  Select,
+  MenuItem,
+  IconButton,
+  Alert,
+  Paper,
+  Grid,
+  TextField,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import SanitizerRoundedIcon from '@mui/icons-material/SanitizerRounded';
+import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { useI18n } from '../lib/i18n.jsx';
 
 export default function ProductSaleModal({
@@ -39,10 +64,10 @@ export default function ProductSaleModal({
   useEffect(() => {
     if (isOpen && canvasRef.current && paymentMode === 'upi') {
       QRCode.toCanvas(canvasRef.current, upiPayload, {
-        width: 180,
+        width: 160,
         margin: 2,
         color: {
-          dark: '#27211C',
+          dark: '#0F172A',
           light: '#FFFFFF',
         },
       }).catch((err) => console.error('QR error:', err));
@@ -77,153 +102,215 @@ export default function ProductSaleModal({
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content" style={{ maxWidth: '460px' }} onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">🧴 {t('catalogue.productSaleTitle')}</h2>
-          <button className="btn btn-secondary btn-sm" onClick={onClose}>
-            ✕
-          </button>
-        </div>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 4, p: 1 },
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <SanitizerRoundedIcon sx={{ color: '#EA580C', fontSize: 24 }} />
+          <span>{t('catalogue.productSaleTitle')}</span>
+        </Box>
+        <IconButton onClick={onClose} size="small" sx={{ color: '#64748B' }}>
+          <CloseRoundedIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+      </DialogTitle>
 
+      <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, py: 2.5 }}>
         {error && (
-          <div
-            style={{
-              backgroundColor: 'var(--status-cancelled-bg)',
-              color: 'var(--status-cancelled)',
-              padding: '12px 16px',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '16px',
-              fontWeight: 600,
-            }}
-          >
-            ⚠️ {error}
-          </div>
+          <Alert severity="error" sx={{ fontWeight: 700, borderRadius: 2 }}>
+            {error}
+          </Alert>
         )}
 
-        <div style={{ padding: '14px', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: '18px' }}>{product.name}</div>
-            <span className="b2b-badge">{product.hsn || 'HSN: 3305'}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '14px', color: 'var(--color-text-muted)' }}>
-            <span>Unit Price: <strong>{formatMoney(product.price_paise)}</strong></span>
-            <span>Available Stock: <strong style={{ color: maxQty < 5 ? 'var(--color-terracotta)' : 'inherit' }}>{maxQty} units</strong></span>
-          </div>
-        </div>
+        {/* Product Details Card */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: 2.5,
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: '#0F172A' }}>
+              {product.name}
+            </Typography>
+            <Chip
+              label={product.hsn || 'HSN: 3305'}
+              size="small"
+              sx={{ fontWeight: 700, fontSize: '0.74rem', height: 22, backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0' }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+            <Typography variant="body2" sx={{ color: '#64748B' }}>
+              Unit: <strong style={{ color: '#0F172A' }}>{formatMoney(product.price_paise)}</strong>
+            </Typography>
+            <Typography variant="body2" sx={{ color: maxQty < 5 ? '#DC2626' : '#16A34A', fontWeight: 700 }}>
+              {maxQty} in stock
+            </Typography>
+          </Box>
+        </Paper>
 
         {/* Quantity Stepper */}
-        <div className="form-group">
-          <label className="form-label">{t('catalogue.saleQuantity')}</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ width: '48px', height: '44px', fontSize: '20px' }}
+        <Box>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#64748B', mb: 1 }}>
+            {t('catalogue.saleQuantity')}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Button
+              variant="outlined"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               disabled={qty <= 1}
+              sx={{ minWidth: 40, height: 40, borderRadius: 2, fontSize: '1.1rem', fontWeight: 800 }}
             >
               -
-            </button>
-            <input
+            </Button>
+            <TextField
+              size="small"
               type="number"
-              className="form-input"
-              style={{ textAlign: 'center', fontSize: '18px', fontWeight: 700, width: '80px' }}
               value={qty}
-              min="1"
-              max={maxQty}
+              inputProps={{ min: 1, max: maxQty, style: { textAlign: 'center', fontWeight: 800, fontSize: '1.1rem' } }}
               onChange={(e) => {
                 const val = parseInt(e.target.value, 10);
                 if (!isNaN(val)) setQty(Math.min(maxQty, Math.max(1, val)));
               }}
+              sx={{ width: 80 }}
             />
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ width: '48px', height: '44px', fontSize: '20px' }}
+            <Button
+              variant="outlined"
               onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
               disabled={qty >= maxQty}
+              sx={{ minWidth: 40, height: 40, borderRadius: 2, fontSize: '1.1rem', fontWeight: 800 }}
             >
               +
-            </button>
-            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-              <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Total Amount</div>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-terracotta)', fontFamily: 'var(--font-heading)' }}>
+            </Button>
+
+            <Box sx={{ ml: 'auto', textAlign: 'right' }}>
+              <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                Total Payable
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: '1.4rem',
+                  color: '#0F172A',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                }}
+              >
                 {formatMoney(totalPricePaise)}
-              </div>
-            </div>
-          </div>
-        </div>
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Customer Selector */}
-        <div className="form-group">
-          <label className="form-label">{t('booking.selectCustomer')}</label>
-          <select
-            className="form-select"
+        <FormControl fullWidth size="small">
+          <InputLabel>{t('booking.selectCustomer')}</InputLabel>
+          <Select
             value={selectedCustomerId}
+            label={t('booking.selectCustomer')}
             onChange={(e) => setSelectedCustomerId(e.target.value)}
           >
-            <option value="walkin">👤 Walk-in Retail Customer</option>
+            <MenuItem value="walkin">👤 Walk-in Retail Customer</MenuItem>
             {customers.map((c) => (
-              <option key={c.id} value={c.id}>
+              <MenuItem key={c.id} value={c.id}>
                 {c.name} ({c.mobile}) {c.gstin ? `[B2B: ${c.gstin}]` : ''}
-              </option>
+              </MenuItem>
             ))}
-          </select>
-        </div>
+          </Select>
+        </FormControl>
 
-        {/* Payment Mode Selector */}
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label">{t('payment.mode')}</label>
-          <div className="payment-modes-grid" style={{ marginTop: '6px' }}>
-            <button
-              type="button"
-              className={`tap-option-btn ${paymentMode === 'cash' ? 'selected' : ''}`}
-              onClick={() => setPaymentMode('cash')}
-            >
-              💵 {t('payment.cash')}
-            </button>
-            <button
-              type="button"
-              className={`tap-option-btn ${paymentMode === 'upi' ? 'selected' : ''}`}
-              onClick={() => setPaymentMode('upi')}
-            >
-              📱 {t('payment.upiQr')}
-            </button>
-            <button
-              type="button"
-              className={`tap-option-btn ${paymentMode === 'card' ? 'selected' : ''}`}
-              onClick={() => setPaymentMode('card')}
-            >
-              💳 {t('payment.card')}
-            </button>
-          </div>
-        </div>
+        {/* Payment Modes */}
+        <Box>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#64748B', mb: 1 }}>
+            {t('payment.mode')}
+          </Typography>
+          <Grid container spacing={1}>
+            <Grid item xs={4}>
+              <Button
+                fullWidth
+                variant={paymentMode === 'cash' ? 'contained' : 'outlined'}
+                color={paymentMode === 'cash' ? 'primary' : 'inherit'}
+                startIcon={<PaymentsRoundedIcon sx={{ fontSize: 16 }} />}
+                onClick={() => setPaymentMode('cash')}
+                sx={{ py: 0.8, fontSize: '0.82rem', fontWeight: 700, borderRadius: 2 }}
+              >
+                {t('payment.cash')}
+              </Button>
+            </Grid>
+            <Grid item xs={4}>
+              <Button
+                fullWidth
+                variant={paymentMode === 'upi' ? 'contained' : 'outlined'}
+                color={paymentMode === 'upi' ? 'primary' : 'inherit'}
+                startIcon={<QrCode2RoundedIcon sx={{ fontSize: 16 }} />}
+                onClick={() => setPaymentMode('upi')}
+                sx={{ py: 0.8, fontSize: '0.82rem', fontWeight: 700, borderRadius: 2 }}
+              >
+                {t('payment.upiQr')}
+              </Button>
+            </Grid>
+            <Grid item xs={4}>
+              <Button
+                fullWidth
+                variant={paymentMode === 'card' ? 'contained' : 'outlined'}
+                color={paymentMode === 'card' ? 'primary' : 'inherit'}
+                startIcon={<CreditCardRoundedIcon sx={{ fontSize: 16 }} />}
+                onClick={() => setPaymentMode('card')}
+                sx={{ py: 0.8, fontSize: '0.82rem', fontWeight: 700, borderRadius: 2 }}
+              >
+                {t('payment.card')}
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
 
         {/* Dynamic UPI QR */}
         {paymentMode === 'upi' && (
-          <div className="qr-container" style={{ padding: '12px', margin: '12px 0 0' }}>
-            <canvas ref={canvasRef} style={{ width: '180px', height: '180px' }} />
-            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-              UPI: <strong>{upiId}</strong> ({formatMoney(totalPricePaise)})
-            </div>
-          </div>
-        )}
-
-        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
-            {t('common.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-sage"
-            disabled={loading || maxQty <= 0}
-            onClick={handleSale}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: 2.5,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
           >
-            {loading ? t('common.loading') : `✅ Record Sale (${formatMoney(totalPricePaise)})`}
-          </button>
-        </div>
-      </div>
-    </div>
+            <canvas ref={canvasRef} style={{ width: 150, height: 150, borderRadius: 8 }} />
+            <Typography variant="caption" sx={{ color: '#64748B', mt: 0.8 }}>
+              UPI ID: <strong style={{ color: '#0F172A' }}>{upiId}</strong> ({formatMoney(totalPricePaise)})
+            </Typography>
+          </Paper>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+        <Button variant="outlined" onClick={onClose} sx={{ borderRadius: 2, height: 38, px: 2 }}>
+          {t('common.cancel')}
+        </Button>
+
+        <Button
+          variant="contained"
+          color="secondary"
+          disabled={loading || maxQty <= 0}
+          onClick={handleSale}
+          startIcon={<CheckCircleRoundedIcon sx={{ fontSize: 18 }} />}
+          sx={{ borderRadius: 2, px: 2.5, height: 38, fontWeight: 800 }}
+        >
+          {loading ? t('common.loading') : `Record Sale (${formatMoney(totalPricePaise)})`}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

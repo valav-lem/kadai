@@ -1,5 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+  Button,
+  Typography,
+  Chip,
+  Paper,
+  IconButton,
+  Grid,
+} from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { useI18n } from '../lib/i18n.jsx';
 
 export default function PaymentModal({
@@ -24,10 +42,10 @@ export default function PaymentModal({
   useEffect(() => {
     if (isOpen && canvasRef.current && paymentMode === 'upi') {
       QRCode.toCanvas(canvasRef.current, upiPayload, {
-        width: 220,
+        width: 200,
         margin: 2,
         color: {
-          dark: '#27211C',
+          dark: '#0F172A',
           light: '#FFFFFF',
         },
       }).catch((err) => console.error('QR rendering error:', err));
@@ -47,104 +65,169 @@ export default function PaymentModal({
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">💳 {t('payment.title')}</h2>
-          <button className="btn btn-secondary btn-sm" onClick={onClose}>✕</button>
-        </div>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 4, p: 1 },
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <PaymentsRoundedIcon sx={{ color: '#EA580C', fontSize: 24 }} />
+          <span>{t('payment.title')}</span>
+        </Box>
+        <IconButton onClick={onClose} size="small" sx={{ color: '#64748B' }}>
+          <CloseRoundedIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+      </DialogTitle>
 
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-muted)', fontWeight: 600 }}>
-            {booking.customer_name} • {booking.item_name}
-          </div>
-          <div style={{ fontSize: 'var(--font-size-metric)', fontFamily: 'var(--font-heading)', color: 'var(--color-terracotta)', marginTop: '6px' }}>
-            {formatMoney(amountPaise)}
-          </div>
-          <div style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-            {t('catalogue.slab')}: {booking.gst_slab}% GST included
-          </div>
-        </div>
+      <DialogContent dividers sx={{ py: 3, textAlign: 'center' }}>
+        {/* Customer & Amount Summary */}
+        <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 600 }}>
+          {booking.customer_name} • {booking.item_name}
+        </Typography>
 
-        {/* Mode Selector */}
-        <div className="payment-modes-grid">
-          <button
-            type="button"
-            className={`tap-option-btn ${paymentMode === 'upi' ? 'selected' : ''}`}
-            onClick={() => setPaymentMode('upi')}
-          >
-            📱 {t('payment.upiQr')}
-          </button>
-          <button
-            type="button"
-            className={`tap-option-btn ${paymentMode === 'cash' ? 'selected' : ''}`}
-            onClick={() => setPaymentMode('cash')}
-          >
-            💵 {t('payment.cash')}
-          </button>
-          <button
-            type="button"
-            className={`tap-option-btn ${paymentMode === 'card' ? 'selected' : ''}`}
-            onClick={() => setPaymentMode('card')}
-          >
-            💳 {t('payment.card')}
-          </button>
-        </div>
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: '2.2rem',
+            color: '#0F172A',
+            letterSpacing: '-0.03em',
+            my: 0.5,
+          }}
+        >
+          {formatMoney(amountPaise)}
+        </Typography>
 
-        {/* Dynamic UPI QR Display */}
+        <Chip
+          label={`${booking.gst_slab}% GST included`}
+          size="small"
+          sx={{
+            backgroundColor: '#EFF6FF',
+            color: '#2563EB',
+            fontWeight: 700,
+            fontSize: '0.74rem',
+            height: 22,
+            mb: 2.5,
+          }}
+        />
+
+        {/* Payment Modes Toggle */}
+        <Grid container spacing={1} sx={{ mb: 2.5 }}>
+          <Grid item xs={4}>
+            <Button
+              fullWidth
+              variant={paymentMode === 'upi' ? 'contained' : 'outlined'}
+              color={paymentMode === 'upi' ? 'primary' : 'inherit'}
+              startIcon={<QrCode2RoundedIcon sx={{ fontSize: 16 }} />}
+              onClick={() => setPaymentMode('upi')}
+              sx={{ py: 0.8, fontSize: '0.82rem', fontWeight: 700, borderRadius: 2 }}
+            >
+              {t('payment.upiQr')}
+            </Button>
+          </Grid>
+          <Grid item xs={4}>
+            <Button
+              fullWidth
+              variant={paymentMode === 'cash' ? 'contained' : 'outlined'}
+              color={paymentMode === 'cash' ? 'primary' : 'inherit'}
+              startIcon={<PaymentsRoundedIcon sx={{ fontSize: 16 }} />}
+              onClick={() => setPaymentMode('cash')}
+              sx={{ py: 0.8, fontSize: '0.82rem', fontWeight: 700, borderRadius: 2 }}
+            >
+              {t('payment.cash')}
+            </Button>
+          </Grid>
+          <Grid item xs={4}>
+            <Button
+              fullWidth
+              variant={paymentMode === 'card' ? 'contained' : 'outlined'}
+              color={paymentMode === 'card' ? 'primary' : 'inherit'}
+              startIcon={<CreditCardRoundedIcon sx={{ fontSize: 16 }} />}
+              onClick={() => setPaymentMode('card')}
+              sx={{ py: 0.8, fontSize: '0.82rem', fontWeight: 700, borderRadius: 2 }}
+            >
+              {t('payment.card')}
+            </Button>
+          </Grid>
+        </Grid>
+
+        {/* Mode Details Display */}
         {paymentMode === 'upi' && (
-          <div className="qr-container">
-            <canvas ref={canvasRef} className="qr-canvas" />
-            <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-muted)', marginTop: '8px' }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <canvas ref={canvasRef} style={{ width: 180, height: 180, borderRadius: 8 }} />
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mt: 1, fontSize: '0.82rem' }}>
               {t('payment.upiInstructions')}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-              UPI ID: <strong>{upiId}</strong>
-            </div>
-          </div>
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#94A3B8', mt: 0.4 }}>
+              UPI ID: <strong style={{ color: '#0F172A' }}>{upiId}</strong>
+            </Typography>
+          </Paper>
         )}
 
         {paymentMode === 'cash' && (
-          <div style={{
-            background: 'var(--status-completed-bg)',
-            color: 'var(--status-completed)',
-            padding: '24px',
-            borderRadius: 'var(--radius-md)',
-            textAlign: 'center',
-            margin: '20px 0',
-            fontWeight: 700,
-          }}>
+          <Box
+            sx={{
+              p: 2.5,
+              backgroundColor: '#F0FDF4',
+              color: '#16A34A',
+              borderRadius: 2.5,
+              border: '1px solid #DCFCE7',
+              fontWeight: 700,
+              fontSize: '0.95rem',
+            }}
+          >
             💵 Collect cash of {formatMoney(amountPaise)} at the counter.
-          </div>
+          </Box>
         )}
 
         {paymentMode === 'card' && (
-          <div style={{
-            background: 'var(--color-surface)',
-            padding: '24px',
-            borderRadius: 'var(--radius-md)',
-            textAlign: 'center',
-            margin: '20px 0',
-            fontWeight: 600,
-          }}>
-            💳 Swipe on counter POS terminal for {formatMoney(amountPaise)}.
-          </div>
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
-            {t('common.close')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-sage"
-            disabled={isRecording}
-            onClick={handleRecordPayment}
+          <Box
+            sx={{
+              p: 2.5,
+              backgroundColor: '#F8FAFC',
+              color: '#0F172A',
+              borderRadius: 2.5,
+              border: '1px solid #E2E8F0',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+            }}
           >
-            {isRecording ? t('common.loading') : `✅ ${t('payment.paid')}`}
-          </button>
-        </div>
-      </div>
-    </div>
+            💳 Swipe on counter POS terminal for {formatMoney(amountPaise)}.
+          </Box>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+        <Button variant="outlined" onClick={onClose} sx={{ borderRadius: 2, height: 38, px: 2 }}>
+          {t('common.close')}
+        </Button>
+
+        <Button
+          variant="contained"
+          color="secondary"
+          disabled={isRecording}
+          onClick={handleRecordPayment}
+          startIcon={<CheckCircleRoundedIcon sx={{ fontSize: 18 }} />}
+          sx={{ borderRadius: 2, px: 2.8, height: 38, fontWeight: 800 }}
+        >
+          {isRecording ? t('common.loading') : t('payment.paid')}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
