@@ -107,5 +107,10 @@
   "auth.roleStaff": "Staff",
   "auth.roleAccountant": "Accountant",
   "auth.pinPlaceholder": "••••",
-  "auth.verify": "Verify PIN"
+  "auth.verify": "Verify PIN",
+
+  "booking.rescheduleTitle": "Reschedule Booking",
+  "catalogue.productSaleTitle": "Product Counter Sale",
+  "catalogue.saleQuantity": "Sale Quantity",
+  "catalogue.sellProduct": "Sell"
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useI18n } from '../lib/i18n.jsx';
 
 export default function QuickBookModal({
@@ -10,33 +10,76 @@ export default function QuickBookModal({
   currentStaff,
   onBookingCreated,
   initialSlot = null,
+  initialStaffId = null,
 }) {
   const { t, formatMoney } = useI18n();
 
   const [step, setStep] = useState(1);
+  const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [newCustName, setNewCustName] = useState('');
   const [newCustMobile, setNewCustMobile] = useState('');
   const [selectedService, setSelectedService] = useState(null);
   const [selectedStaff, setSelectedStaff] = useState(currentStaff || staffList[0]);
-  const [startTime, setStartTime] = useState(() => {
-    if (initialSlot) return initialSlot;
-    const now = new Date();
-    // Round to nearest 15 mins
-    const minutes = Math.ceil(now.getMinutes() / 15) * 15;
-    now.setMinutes(minutes, 0, 0);
-    return now.toISOString().slice(0, 16);
-  });
+  const [startTime, setStartTime] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      setError(null);
+      setStep(1);
+      setCustomerSearch('');
+      setSelectedCustomer(null);
+      setNewCustName('');
+      setNewCustMobile('');
+      setSelectedService(services[0] || null);
+
+      if (initialStaffId) {
+        const matchingStaff = staffList.find((s) => String(s.id) === String(initialStaffId));
+        if (matchingStaff) setSelectedStaff(matchingStaff);
+        else setSelectedStaff(currentStaff || staffList[0]);
+      } else {
+        setSelectedStaff(currentStaff || staffList[0]);
+      }
+
+      if (initialSlot) {
+        setStartTime(initialSlot);
+      } else {
+        const now = new Date();
+        const minutes = Math.ceil(now.getMinutes() / 15) * 15;
+        now.setMinutes(minutes, 0, 0);
+        // Format to YYYY-MM-DDTHH:MM in local time
+        const pad = (n) => String(n).padStart(2, '0');
+        const localIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        setStartTime(localIso);
+      }
+    }
+  }, [isOpen, initialSlot, initialStaffId, currentStaff, services, staffList]);
+
   if (!isOpen) return null;
+
+  const filteredCustomers = customers.filter((c) => {
+    if (!customerSearch.trim()) return true;
+    const term = customerSearch.toLowerCase();
+    return c.name.toLowerCase().includes(term) || c.mobile.includes(term);
+  });
 
   const handleCreate = async () => {
     setError(null);
     setLoading(true);
 
     try {
+      if (!selectedService) {
+        throw new Error('Please select a service');
+      }
+      if (!selectedStaff) {
+        throw new Error('Please select a staff member');
+      }
+      if (!startTime) {
+        throw new Error('Please select a time slot');
+      }
+
       const payload = {
         item_id: selectedService.id,
         staff_id: selectedStaff.id,
@@ -47,11 +90,11 @@ export default function QuickBookModal({
 
       if (selectedCustomer) {
         payload.customer_id = selectedCustomer.id;
-      } else if (newCustName && newCustMobile) {
-        payload.customer_name = newCustName;
-        payload.customer_mobile = newCustMobile;
+      } else if (newCustName.trim() && newCustMobile.trim()) {
+        payload.customer_name = newCustName.trim();
+        payload.customer_mobile = newCustMobile.trim();
       } else {
-        throw new Error('Please select or enter customer details');
+        throw new Error('Please select an existing customer or enter new customer details');
       }
 
       await onBookingCreated(payload);
@@ -74,14 +117,16 @@ export default function QuickBookModal({
         </div>
 
         {error && (
-          <div style={{
-            backgroundColor: 'var(--status-cancelled-bg)',
-            color: 'var(--status-cancelled)',
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-sm)',
-            marginBottom: '16px',
-            fontWeight: 600,
-          }}>
+          <div
+            style={{
+              backgroundColor: 'var(--status-cancelled-bg)',
+              color: 'var(--status-cancelled)',
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '16px',
+              fontWeight: 600,
+            }}
+          >
             ⚠️ {error}
           </div>
         )}
@@ -89,41 +134,84 @@ export default function QuickBookModal({
         {/* STEP 1: Select or Enter Customer */}
         <div className="flow-step-box">
           <div className="flow-step-title">{t('booking.selectCustomer')}</div>
-          <div className="tap-options-grid" style={{ marginBottom: '12px' }}>
-            {customers.slice(0, 4).map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className={`tap-option-btn ${selectedCustomer?.id === c.id ? 'selected' : ''}`}
-                onClick={() => {
-                  setSelectedCustomer(c);
-                  setNewCustName('');
-                  setNewCustMobile('');
-                  setStep(2);
-                }}
-              >
-                <span>{c.name}</span>
-                <span style={{ fontSize: '12px', opacity: 0.8 }}>{c.mobile}</span>
-              </button>
-            ))}
-          </div>
 
-          {!selectedCustomer && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          {selectedCustomer ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                background: 'var(--color-surface)',
+                borderRadius: 'var(--radius-sm)',
+                border: '2px solid var(--color-terracotta)',
+              }}
+            >
+              <div>
+                <strong style={{ fontSize: '16px' }}>{selectedCustomer.name}</strong>
+                <span style={{ color: 'var(--color-text-muted)', marginLeft: '8px' }}>
+                  📞 {selectedCustomer.mobile}
+                </span>
+                {selectedCustomer.gstin && (
+                  <span className="b2b-badge" style={{ marginLeft: '8px' }}>
+                    GST: {selectedCustomer.gstin}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setSelectedCustomer(null)}
+              >
+                ✕ Change
+              </button>
+            </div>
+          ) : (
+            <div>
               <input
                 type="text"
-                placeholder={t('customers.name')}
+                placeholder={`🔍 Search ${customers.length} customers by name or mobile...`}
                 className="form-input"
-                value={newCustName}
-                onChange={(e) => setNewCustName(e.target.value)}
+                style={{ marginBottom: '10px' }}
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
               />
-              <input
-                type="tel"
-                placeholder={t('customers.mobile')}
-                className="form-input"
-                value={newCustMobile}
-                onChange={(e) => setNewCustMobile(e.target.value)}
-              />
+
+              <div className="tap-options-grid" style={{ marginBottom: '12px', maxHeight: '160px', overflowY: 'auto' }}>
+                {filteredCustomers.slice(0, 6).map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="tap-option-btn"
+                    onClick={() => {
+                      setSelectedCustomer(c);
+                      setNewCustName('');
+                      setNewCustMobile('');
+                      setStep(2);
+                    }}
+                  >
+                    <span>{c.name}</span>
+                    <span style={{ fontSize: '12px', opacity: 0.8 }}>{c.mobile}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <input
+                  type="text"
+                  placeholder={`+ New ${t('customers.name')}`}
+                  className="form-input"
+                  value={newCustName}
+                  onChange={(e) => setNewCustName(e.target.value)}
+                />
+                <input
+                  type="tel"
+                  placeholder={`+ New 10-digit ${t('customers.mobile')}`}
+                  className="form-input"
+                  value={newCustMobile}
+                  onChange={(e) => setNewCustMobile(e.target.value)}
+                />
+              </div>
             </div>
           )}
         </div>

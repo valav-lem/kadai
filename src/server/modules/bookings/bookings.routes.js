@@ -34,12 +34,15 @@ export default async function bookingsRoutes(fastify, _options) {
   });
 
   fastify.patch('/:id/status', async (request, reply) => {
-    const { status } = request.body || {};
+    const { status, payment_mode, paid_amount_paise } = request.body || {};
     if (!status) {
       return reply.status(400).send({ error: 'Status is required' });
     }
     try {
-      const booking = await bookingsService.updateBookingStatus(request.params.id, status);
+      const booking = await bookingsService.updateBookingStatus(request.params.id, status, {
+        payment_mode,
+        paid_amount_paise,
+      });
       if (!booking) {
         return reply.status(404).send({ error: 'Booking not found' });
       }
@@ -47,6 +50,22 @@ export default async function bookingsRoutes(fastify, _options) {
     } catch (err) {
       const statusCode = err.statusCode || 400;
       return reply.status(statusCode).send({ error: err.message, code: err.code });
+    }
+  });
+
+  fastify.put('/:id', async (request, reply) => {
+    try {
+      const booking = await bookingsService.updateBooking(request.params.id, request.body || {});
+      if (!booking) {
+        return reply.status(404).send({ error: 'Booking not found' });
+      }
+      return { booking };
+    } catch (err) {
+      const status = err.statusCode || (err.code === 'DOUBLE_BOOKED' ? 409 : 400);
+      return reply.status(status).send({
+        error: err.message,
+        code: err.code || 'UPDATE_FAILED',
+      });
     }
   });
 }

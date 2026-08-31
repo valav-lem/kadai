@@ -39,7 +39,7 @@ export default function PaymentModal({
   const handleRecordPayment = async () => {
     setIsRecording(true);
     try {
-      await onComplete(booking.id, paymentMode);
+      await onComplete(booking.id, paymentMode, amountPaise);
       onClose();
     } finally {
       setIsRecording(false);

@@ -138,16 +138,36 @@ export async function createBooking(bookingData) {
   }
 }
 
-export async function updateBookingStatus(id, status) {
+export async function updateBookingStatus(id, status, paymentDetails = {}) {
   const res = await fetch(`/api/bookings/${id}/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({
+      status,
+      payment_mode: paymentDetails.payment_mode,
+      paid_amount_paise: paymentDetails.paid_amount_paise,
+    }),
   });
   const data = await res.json();
   if (!res.ok) {
     const err = new Error(data.error || 'Failed to update status');
     err.code = data.code;
+    throw err;
+  }
+  return data.booking;
+}
+
+export async function updateBooking(id, bookingData) {
+  const res = await fetch(`/api/bookings/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(bookingData),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const err = new Error(data.error || 'Failed to update booking');
+    err.code = data.code;
+    err.statusCode = res.status;
     throw err;
   }
   return data.booking;
