@@ -15,6 +15,7 @@ boundary, an invariant, or a statutory interpretation that shapes the data model
 | [0005](0005-offline-first-counter.md) | The counter works offline; compliance screens do not | Accepted |
 | [0006](0006-fastify-over-express.md) | Fastify over Express for the API server | Accepted |
 | [0007](0007-payment-collection-via-gateway.md) | Invoice payment collection via UPI, Razorpay and Cashfree | Accepted (W3 only) |
+| [0008](0008-design-system-divergence.md) | The shipped UI diverges from the Organic design system | **Proposed** — direction not chosen |
 
 ## Template
 
