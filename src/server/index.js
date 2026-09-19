@@ -21,7 +21,12 @@ if (existsSync(envPath)) {
     const trimmed = line.trim();
     if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
       const [key, ...rest] = trimmed.split('=');
-      const val = rest.join('=').trim().replace(/^['"]|['"]$/g, '');
+      let val = rest.join('=').trim();
+      // A quoted value is taken verbatim; an unquoted one ends at the first
+      // whitespace-preceded '#', so `SHOP_STATE_CODE=33  # Tamil Nadu` yields
+      // '33'. The whitespace matters: '#' is legal inside a password or URL.
+      const quoted = /^(['"])([\s\S]*)\1$/.exec(val);
+      val = quoted ? quoted[2] : val.replace(/\s+#.*$/, '').trim();
       if (!process.env[key.trim()]) {
         process.env[key.trim()] = val;
       }
