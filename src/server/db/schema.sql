@@ -24,6 +24,18 @@ do $$ begin
   create type user_role as enum ('owner','staff','accountant');
 exception when duplicate_object then null; end $$;
 
+do $$ begin
+  create type payment_method as enum ('upi','razorpay','cashfree','cash','card');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  -- One lifecycle step, not a mutable field: a gateway attempt is an
+  -- 'initiated' row, then a separate 'captured' or 'failed' row referencing
+  -- the same gateway_ref. See ADR-0007 — payment status changes are new
+  -- rows/events, they never rewrite an existing one.
+  create type payment_event_status as enum ('initiated','captured','failed');
+exception when duplicate_object then null; end $$;
+
 create table if not exists staff (
   id          bigserial primary key,
   name        text not null,
@@ -109,6 +121,30 @@ create table if not exists invoice_lines (
   rate_paise    bigint not null,
   gst_slab      numeric(4,2) not null   -- frozen from the item at billing time
 );
+-- A booking is billed onto at most one invoice line, ever.
+create unique index if not exists idx_invoice_lines_booking_id
+  on invoice_lines(booking_id) where booking_id is not null;
+
+-- Payment events against an already-issued invoice (ADR-0007). Never mutate
+-- an invoice to mark it paid: each attempt and each gateway callback is its
+-- own row. "Paid so far" is sum(amount_paise) where status = 'captured',
+-- computed at read time in billing.service.js — never cached on invoices.
+create table if not exists payments (
+  id            bigserial primary key,
+  invoice_id    bigint not null references invoices(id),
+  method        payment_method not null,
+  status        payment_event_status not null,
+  amount_paise  bigint not null check (amount_paise > 0),
+  gateway       text,                   -- 'razorpay' | 'cashfree' | null for upi/cash/card
+  gateway_ref   text,                   -- gateway's order/link id; ties the lifecycle events of one attempt together
+  payload       jsonb,                  -- raw gateway/webhook payload, kept for audit
+  recorded_at   timestamptz not null default now()
+);
+create index if not exists idx_payments_invoice_id on payments(invoice_id);
+-- A given gateway attempt reaches 'captured' at most once — makes the
+-- webhook handler idempotent under retry without a read-then-write race.
+create unique index if not exists idx_payments_captured_once
+  on payments(gateway, gateway_ref) where status = 'captured' and gateway_ref is not null;
 
 create table if not exists gst_returns (
   id           bigserial primary key,
@@ -143,4 +179,4 @@ create table if not exists import_logs (
 );
 
 -- Statutory tables are append-only. Enforced by role grants, not by convention.
-revoke delete, truncate on invoices, invoice_lines, gst_returns, tally_pushes, import_logs from public;
+revoke delete, truncate on invoices, invoice_lines, payments, gst_returns, tally_pushes, import_logs from public;

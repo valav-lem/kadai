@@ -1,38 +1,20 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+
+// Imported first and called immediately: the route modules below import
+// src/server/db/index.js, which needs DATABASE_URL already in process.env by
+// the time its own top-level code runs (ESM evaluates imports before the
+// importing module's body). db/index.js calls loadEnv() too, so whichever of
+// the two runs first wins — this call just makes it explicit here as well.
+import { loadEnv } from './load-env.js';
+loadEnv();
 
 import staffRoutes from './modules/staff/staff.routes.js';
 import catalogueRoutes from './modules/catalogue/catalogue.routes.js';
 import customersRoutes from './modules/customers/customers.routes.js';
 import bookingsRoutes from './modules/bookings/bookings.routes.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const rootDir = resolve(__dirname, '../..');
-
-// Load .env
-const envPath = resolve(rootDir, '.env');
-if (existsSync(envPath)) {
-  const envContent = readFileSync(envPath, 'utf8');
-  for (const line of envContent.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
-      const [key, ...rest] = trimmed.split('=');
-      let val = rest.join('=').trim();
-      // A quoted value is taken verbatim; an unquoted one ends at the first
-      // whitespace-preceded '#', so `SHOP_STATE_CODE=33  # Tamil Nadu` yields
-      // '33'. The whitespace matters: '#' is legal inside a password or URL.
-      const quoted = /^(['"])([\s\S]*)\1$/.exec(val);
-      val = quoted ? quoted[2] : val.replace(/\s+#.*$/, '').trim();
-      if (!process.env[key.trim()]) {
-        process.env[key.trim()] = val;
-      }
-    }
-  }
-}
+import billingRoutes from './modules/billing/billing.routes.js';
+import webhookRoutes from './modules/billing/webhooks.routes.js';
 
 const fastify = Fastify({
   logger: process.env.NODE_ENV === 'test' ? false : true,
@@ -42,6 +24,25 @@ const fastify = Fastify({
 await fastify.register(cors, {
   origin: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+});
+
+// Replaces the default JSON body parser with one that also stashes the raw
+// request string on request.rawBody. Every other route ignores it; the
+// Razorpay/Cashfree webhook routes need it because their signatures are
+// computed over the exact bytes sent, not over our re-serialized copy of
+// the parsed object.
+fastify.addContentTypeParser('application/json', { parseAs: 'string' }, (request, body, done) => {
+  request.rawBody = body;
+  if (!body) {
+    done(null, undefined);
+    return;
+  }
+  try {
+    done(null, JSON.parse(body));
+  } catch (err) {
+    err.statusCode = 400;
+    done(err, undefined);
+  }
 });
 
 // Health check
@@ -68,6 +69,8 @@ await fastify.register(staffRoutes, { prefix: '/api/staff' });
 await fastify.register(catalogueRoutes, { prefix: '/api/catalogue' });
 await fastify.register(customersRoutes, { prefix: '/api/customers' });
 await fastify.register(bookingsRoutes, { prefix: '/api/bookings' });
+await fastify.register(billingRoutes, { prefix: '/api/invoices' });
+await fastify.register(webhookRoutes, { prefix: '/api/webhooks' });
 
 // Global Error Handler
 fastify.setErrorHandler((error, request, reply) => {
