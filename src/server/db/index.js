@@ -1,27 +1,11 @@
 import pg from 'pg';
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const rootDir = resolve(__dirname, '../../..');
+import { loadEnv } from '../load-env.js';
 
-// Load .env manually if available without extra dependencies
-const envPath = resolve(rootDir, '.env');
-if (existsSync(envPath)) {
-  const envContent = readFileSync(envPath, 'utf8');
-  for (const line of envContent.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
-      const [key, ...rest] = trimmed.split('=');
-      const val = rest.join('=').trim().replace(/^['"]|['"]$/g, '');
-      if (!process.env[key.trim()]) {
-        process.env[key.trim()] = val;
-      }
-    }
-  }
-}
+// This module is imported (via the *.service.js files) before
+// src/server/index.js's own top-level code runs, so it's this call — not
+// index.js's — that actually puts DATABASE_URL into process.env first.
+loadEnv();
 
 const connectionString = process.env.DATABASE_URL || 'postgres://kadai:kadai@localhost:5432/kadai';
 

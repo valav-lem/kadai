@@ -14,5 +14,9 @@ Thumbs.db
 !.vscode/extensions.json
 /data/*.sqlite
 /data/*.sqlite-journal
+
+# Local PGlite dev database (see scripts/db-local.js) — not a real Postgres
+# install, never used outside development, never the statutory store.
+/.data/
 /exports/
 /tmp/

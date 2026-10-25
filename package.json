@@ -20,6 +20,8 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "@electric-sql/pglite-socket": "^0.2.14",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
@@ -35,6 +37,7 @@
     "dev:web": "vite src/web",
     "build": "vite build src/web",
     "start": "node src/server/index.js",
+    "db:local": "node scripts/db-local.js",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
     "test": "node --test src/server/**/*.test.js",
