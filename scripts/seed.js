@@ -1,27 +1,8 @@
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const rootDir = resolve(__dirname, '..');
+import { loadEnv } from '../src/server/load-env.js';
 
-// Load .env
-const envPath = resolve(rootDir, '.env');
-if (existsSync(envPath)) {
-  const envContent = readFileSync(envPath, 'utf8');
-  for (const line of envContent.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
-      const [key, ...rest] = trimmed.split('=');
-      const val = rest.join('=').trim().replace(/^['"]|['"]$/g, '');
-      if (!process.env[key.trim()]) {
-        process.env[key.trim()] = val;
-      }
-    }
-  }
-}
+loadEnv();
 
 const connectionString = process.env.DATABASE_URL || 'postgres://kadai:kadai@localhost:5432/kadai';
 
